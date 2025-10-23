@@ -6,19 +6,23 @@
 	import type { SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
 	import Spinner from './ui/spinner/spinner.svelte';
 	import { EllipsisVertical } from 'lucide-svelte';
-
+	import * as Select from '$lib/components/ui/select/index.js';
+	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	let {
 		results = $bindable<SearchProfilesOutput | null>(null)
 	}: { results?: SearchProfilesOutput | null } = $props();
 
 	let query = $state('');
-	let limit = $state(7);
+	let limit = $state(5);
+	let extendToNostr = $state(false);
 	let sourcePubkey = $state('');
 	let weightingScheme = $state<'default' | 'social' | 'validation' | 'strict'>('default');
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 	let showAdvancedConfig = $state(false);
-
+	$effect(() => {
+		console.log($state.snapshot(extendToNostr));
+	});
 	async function handleSearch() {
 		if (!query.trim()) return;
 
@@ -26,7 +30,13 @@
 		error = null;
 
 		try {
-			const searchParams: Parameters<typeof relatr.SearchProfiles> = [query, limit];
+			const searchParams: Parameters<typeof relatr.SearchProfiles> = [
+				query,
+				limit,
+				undefined,
+				weightingScheme,
+				extendToNostr
+			];
 
 			if (sourcePubkey.trim()) {
 				searchParams.push(sourcePubkey);
@@ -107,16 +117,27 @@
 					</div>
 					<div class="space-y-2">
 						<Label for="weighting-scheme">Weighting Scheme</Label>
-						<select
-							id="weighting-scheme"
-							bind:value={weightingScheme}
-							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							<option value="default">Default</option>
-							<option value="social">Social</option>
-							<option value="validation">Validation</option>
-							<option value="strict">Strict</option>
-						</select>
+
+						<Select.Root type="single" bind:value={weightingScheme}>
+							<Select.Trigger class="w-full" placeholder="Select weighting scheme">
+								{weightingScheme}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Item value="default">Default</Select.Item>
+								<Select.Item value="social">Social</Select.Item>
+								<Select.Item value="validation">Validation</Select.Item>
+								<Select.Item value="strict">Strict</Select.Item>
+							</Select.Content>
+						</Select.Root>
+					</div>
+					<div class="space-y-2">
+						<Label for="extend-to-nostr">Extend to Nostr</Label>
+						<div class="flex items-center space-x-2">
+							<Checkbox id="extend-to-nostr" bind:checked={extendToNostr} />
+							<Label for="extend-to-nostr" class="cursor-pointer"
+								>Extend search to Nostr network</Label
+							>
+						</div>
 					</div>
 				</div>
 			{/if}

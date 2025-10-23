@@ -2,8 +2,9 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
-	import type { SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+	import { relatr, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
 
 	let searchResults = $state<SearchProfilesOutput | null>(null);
 	let activeTab = $state<'search' | 'trust'>('search');

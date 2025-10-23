@@ -48,6 +48,7 @@
 		"applesauce-core": "^4.1.0",
 		"applesauce-loaders": "^4.0.0",
 		"applesauce-relay": "^4.1.0",
-		"lucide-svelte": "^0.546.0"
+		"lucide-svelte": "^0.546.0",
+		"mode-watcher": "^1.1.0"
 	}
 }

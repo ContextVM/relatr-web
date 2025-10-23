@@ -50,17 +50,6 @@ export interface HealthCheckOutput {
 	timestamp: number;
 }
 
-export interface ManageCacheInput {
-	action: 'clear' | 'cleanup' | 'stats';
-	targetPubkey?: string;
-}
-
-export interface ManageCacheOutput {
-	success: boolean;
-	metricsCleared?: number;
-	message: string;
-}
-
 export interface SearchProfilesInput {
 	query: string;
 	/**
@@ -75,6 +64,10 @@ export interface SearchProfilesInput {
 	 * Weighting scheme: 'default' (balanced), 'social' (higher social distance), 'validation' (higher profile validation), 'strict' (highest requirements)
 	 */
 	weightingScheme?: 'default' | 'social' | 'validation' | 'strict';
+	/**
+	 * Whether to extend the search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
+	 */
+	extendToNostr?: boolean;
 }
 
 export interface SearchProfilesOutput {
@@ -94,12 +87,12 @@ export type Relatr = {
 		weightingScheme?: string
 	) => Promise<CalculateTrustScoreOutput>;
 	HealthCheck: (args: HealthCheckInput) => Promise<HealthCheckOutput>;
-	ManageCache: (action: string, targetPubkey?: string) => Promise<ManageCacheOutput>;
 	SearchProfiles: (
 		query: string,
 		limit?: number,
 		sourcePubkey?: string,
-		weightingScheme?: string
+		weightingScheme?: string,
+		extendToNostr?: boolean
 	) => Promise<SearchProfilesOutput>;
 };
 
@@ -175,30 +168,28 @@ export class RelatrClient implements Relatr {
 	}
 
 	/**
-	 * Manage cache operations (clear, cleanup, stats)
-	 * @param {string} action The action parameter
-	 * @param {string} targetPubkey [optional] The target pubkey parameter
-	 * @returns {Promise<ManageCacheOutput>} The result of the manage_cache operation
-	 */
-	async ManageCache(action: string, targetPubkey?: string): Promise<ManageCacheOutput> {
-		return this.call('manage_cache', { action, targetPubkey });
-	}
-
-	/**
 	 * Search for Nostr profiles by name/query and return results sorted by trust score. Queries metadata relays and calculates trust scores for each result.
 	 * @param {string} query The query parameter
 	 * @param {number} limit [optional] Maximum number of results to return (default: 20)
 	 * @param {string} sourcePubkey [optional] Optional source pubkey for trust score calculation (uses default if not provided)
 	 * @param {string} weightingScheme [optional] Weighting scheme: 'default' (balanced), 'social' (higher social distance), 'validation' (higher profile validation), 'strict' (highest requirements)
+	 * @param {boolean} extendToNostr [optional] Whether to extend the search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
 	 * @returns {Promise<SearchProfilesOutput>} The result of the search_profiles operation
 	 */
 	async SearchProfiles(
 		query: string,
 		limit?: number,
 		sourcePubkey?: string,
-		weightingScheme?: string
+		weightingScheme?: string,
+		extendToNostr?: boolean
 	): Promise<SearchProfilesOutput> {
-		return this.call('search_profiles', { query, limit, sourcePubkey, weightingScheme });
+		return this.call('search_profiles', {
+			query,
+			limit,
+			sourcePubkey,
+			weightingScheme,
+			extendToNostr
+		});
 	}
 }
 

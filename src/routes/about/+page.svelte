@@ -7,7 +7,12 @@
 			<div class="w-full max-w-2xl space-y-8">
 				<!-- Logo at the top -->
 				<div class="mb-8 flex justify-center">
-					<img src="/relatr-logo.svg" alt="Relatr Logo" class="h-42 w-auto" />
+					<img src="/relatr-logo2.svg" alt="Relatr Logo" class="h-42 w-auto dark:hidden" />
+					<img
+						src="/relatr-logo2-white.svg"
+						alt="Relatr Logo"
+						class="hidden h-42 w-auto dark:block"
+					/>
 				</div>
 
 				<!-- About content -->

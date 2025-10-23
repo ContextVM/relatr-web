@@ -18,13 +18,28 @@ NostrConnectSigner.publishMethod = relayPool.publish.bind(relayPool);
 // Client-side initialization
 if (browser) {
 	// first load all accounts from localStorage
-	const json = JSON.parse(localStorage.getItem('nostr-accounts') || '[]');
+	const json = JSON.parse(localStorage.getItem('relatr-accounts') || '[]');
 	if (json.length) {
 		manager.fromJSON(json);
 
 		// load active account from storage
 		const active = localStorage.getItem('active');
-		if (active) manager.setActive(active);
+		if (active) {
+			// Ensure the active id actually exists in the manager before calling setActive
+			const accounts = manager.toJSON();
+			const exists = accounts.find((a) => a.id === active);
+			if (exists) {
+				try {
+					manager.setActive(active);
+				} catch (err) {
+					console.warn('Failed to set active account:', err);
+					localStorage.removeItem('active');
+				}
+			} else {
+				console.warn('Active account id not found, removing from storage:', active);
+				localStorage.removeItem('active');
+			}
+		}
 
 		// subscribe to active changes
 	}
@@ -35,13 +50,13 @@ if (browser) {
 	// next, subscribe to any accounts added or removed
 	manager.accounts$.subscribe(() => {
 		// save all the accounts into the "accounts" field
-		localStorage.setItem('nostr-accounts', JSON.stringify(manager.toJSON()));
+		localStorage.setItem('relatr-accounts', JSON.stringify(manager.toJSON()));
 	});
 }
 
 export const logout = () => {
 	// if (browser) {
-	// 	localStorage.removeItem('nostr-accounts');
+	// 	localStorage.removeItem('atob-accounts');
 	// }
 	manager.clearActive();
 };
