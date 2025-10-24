@@ -5,13 +5,15 @@
 	import { ProfileModel } from 'applesauce-core/models';
 	import { validateAndDecodePubkey, encodeNpub, pubkeyToHexColor } from '$lib/utils.nostr';
 	import { Metadata } from 'nostr-tools/kinds';
-
+	import Badge from './ui/badge/badge.svelte';
+	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	let {
 		pubkey,
 		mode = 'default',
 		trustScore,
 		rank,
 		showPubkey = false,
+		exactMatch = false,
 		onClick
 	}: {
 		pubkey: string;
@@ -19,6 +21,7 @@
 		trustScore?: number;
 		rank?: number;
 		showPubkey?: boolean;
+		exactMatch?: boolean;
 		onClick?: () => void;
 	} = $props();
 
@@ -64,6 +67,19 @@
 			style="background-color: {pubkeyToHexColor(pubkey)}"
 		></div>
 	{/if}
+{/snippet}
+
+{#snippet exactMatchSnippet()}
+	<Tooltip.Provider delayDuration={250}>
+		<Tooltip.Root>
+			<Tooltip.Trigger>
+				<Badge class="ml-2">Exact Match</Badge>
+			</Tooltip.Trigger>
+			<Tooltip.Content>
+				<p>Exact matches boost the trust score of the target profile during search.</p>
+			</Tooltip.Content>
+		</Tooltip.Root>
+	</Tooltip.Provider>
 {/snippet}
 
 <!-- Minimal mode - just name and pfp -->
@@ -116,6 +132,9 @@
 					</span>
 				{/if}
 			</div>
+			{#if exactMatch}
+				{@render exactMatchSnippet()}
+			{/if}
 			{#if rank}
 				<div class="text-xs font-medium text-muted-foreground">
 					#{rank}
@@ -145,6 +164,9 @@
 					</span>
 				{/if}
 			</div>
+			{#if exactMatch}
+				{@render exactMatchSnippet()}
+			{/if}
 			{#if rank}
 				<div class="text-xs font-medium text-muted-foreground">
 					#{rank}

@@ -64,6 +64,7 @@ export function validateAndDecodePubkey(identifier: string): string | null {
 		}
 	} catch (error) {
 		// Invalid nip19 format
+		console.error(error);
 		return null;
 	}
 
@@ -175,6 +176,7 @@ export function validateAndDecodeEventId(identifier: string): string | null {
 		}
 	} catch (error) {
 		// Invalid nip19 format
+		console.error(error);
 		return null;
 	}
 

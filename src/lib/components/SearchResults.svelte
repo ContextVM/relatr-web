@@ -25,6 +25,7 @@
 						trustScore={result.trustScore}
 						rank={result.rank}
 						showPubkey={true}
+						exactMatch={result.exactMatch}
 					/>
 				</Card>
 			{/each}

@@ -6,16 +6,17 @@
 	import Spinner from './ui/spinner/spinner.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import TrustScoreDisplay from './TrustScoreDisplay.svelte';
-	import { relatr } from '$lib/ctxcn/RelatrClient.js';
-	import type { CalculateTrustScoreOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { Relatr, CalculateTrustScoreOutput } from '$lib/ctxcn/RelatrClient.js';
 	import { X, EllipsisVertical } from 'lucide-svelte';
 
 	let {
 		targetPubkey = $bindable(''),
-		sourcePubkey = $bindable('')
+		sourcePubkey = $bindable(''),
+		relatr
 	}: {
 		targetPubkey?: string;
 		sourcePubkey?: string;
+		relatr: Relatr;
 	} = $props();
 	let weightingScheme = $state<'default' | 'social' | 'validation' | 'strict'>('default');
 	let isLoading = $state(false);
@@ -170,7 +171,7 @@
 				<CardContent>
 					<div class="flex items-center justify-center gap-4">
 						<TrustScoreDisplay
-							value={result.trustScore.score}
+							value={result.trustScore.score || 0}
 							mode="combined"
 							size="lg"
 							showLabel={true}
@@ -188,7 +189,7 @@
 					<div class="grid grid-cols-1 gap-4 md:grid-cols-3">
 						<div class="text-center">
 							<TrustScoreDisplay
-								value={result.trustScore.components.distanceWeight}
+								value={result.trustScore.components.distanceWeight || 0}
 								mode="combined"
 								size="md"
 								showLabel={true}
@@ -197,7 +198,7 @@
 						</div>
 						<div class="text-center">
 							<TrustScoreDisplay
-								value={result.trustScore.components.socialDistance}
+								value={result.trustScore.components.socialDistance || 0}
 								mode="combined"
 								size="md"
 								showLabel={true}
@@ -206,7 +207,7 @@
 						</div>
 						<div class="text-center">
 							<TrustScoreDisplay
-								value={result.trustScore.components.normalizedDistance}
+								value={result.trustScore.components.normalizedDistance || 0}
 								mode="combined"
 								size="md"
 								showLabel={true}
@@ -223,53 +224,25 @@
 					<CardTitle class="text-lg">Profile Validators</CardTitle>
 				</CardHeader>
 				<CardContent>
-					<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-						<div class="text-center">
-							<TrustScoreDisplay
-								value={result.trustScore.components.validators.nip05Valid}
-								mode="combined"
-								size="sm"
-								showLabel={true}
-								label="NIP-05 Valid"
-							/>
+					{#if Object.keys(result.trustScore.components.validators).length > 0}
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+							{#each Object.entries(result.trustScore.components.validators) as [validatorKey, validatorValue] (validatorKey + validatorValue)}
+								<div class="text-center">
+									<TrustScoreDisplay
+										value={validatorValue || 0}
+										mode="combined"
+										size="sm"
+										showLabel={true}
+										label={validatorKey
+											.replace(/([A-Z])/g, ' $1')
+											.replace(/^./, (str) => str.toUpperCase())}
+									/>
+								</div>
+							{/each}
 						</div>
-						<div class="text-center">
-							<TrustScoreDisplay
-								value={result.trustScore.components.validators.lightningAddress}
-								mode="combined"
-								size="sm"
-								showLabel={true}
-								label="Lightning Address"
-							/>
-						</div>
-						<div class="text-center">
-							<TrustScoreDisplay
-								value={result.trustScore.components.validators.eventKind10002}
-								mode="combined"
-								size="sm"
-								showLabel={true}
-								label="Event Kind 10002"
-							/>
-						</div>
-						<div class="text-center">
-							<TrustScoreDisplay
-								value={result.trustScore.components.validators.reciprocity}
-								mode="combined"
-								size="sm"
-								showLabel={true}
-								label="Reciprocity"
-							/>
-						</div>
-						<div class="text-center">
-							<TrustScoreDisplay
-								value={result.trustScore.components.validators.isRootNip05}
-								mode="combined"
-								size="sm"
-								showLabel={true}
-								label="Is Root NIP-05"
-							/>
-						</div>
-					</div>
+					{:else}
+						<p class="text-center text-muted-foreground">No validator data available</p>
+					{/if}
 				</CardContent>
 			</Card>
 

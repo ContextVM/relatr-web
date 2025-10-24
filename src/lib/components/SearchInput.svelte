@@ -2,15 +2,18 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import { relatr } from '$lib/ctxcn/RelatrClient.js';
-	import type { SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { Relatr, SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
 	import Spinner from './ui/spinner/spinner.svelte';
 	import { EllipsisVertical } from 'lucide-svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	let {
-		results = $bindable<SearchProfilesOutput | null>(null)
-	}: { results?: SearchProfilesOutput | null } = $props();
+		results = $bindable<SearchProfilesOutput | null>(null),
+		relatr
+	}: {
+		results?: SearchProfilesOutput | null;
+		relatr: Relatr;
+	} = $props();
 
 	let query = $state('');
 	let limit = $state(5);

@@ -27,11 +27,7 @@ export interface CalculateTrustScoreOutput {
 		components: {
 			distanceWeight: number;
 			validators: {
-				nip05Valid: number;
-				lightningAddress: number;
-				eventKind10002: number;
-				reciprocity: number;
-				isRootNip05: number;
+				[k: string]: number;
 			};
 			socialDistance: number;
 			normalizedDistance: number;
@@ -75,6 +71,7 @@ export interface SearchProfilesOutput {
 		pubkey: string;
 		trustScore: number;
 		rank: number;
+		exactMatch?: boolean;
 	}[];
 	totalFound: number;
 	searchTimeMs: number;
@@ -115,11 +112,12 @@ export class RelatrClient implements Relatr {
 			relays = ['ws://localhost:10547'],
 			signer = new PrivateKeySigner(privateKey || ''),
 			relayHandler = new ApplesauceRelayPool(relays),
+			serverPubkey,
 			...rest
 		} = options;
 
 		this.transport = new NostrClientTransport({
-			serverPubkey: RelatrClient.SERVER_PUBKEY,
+			serverPubkey: serverPubkey || RelatrClient.SERVER_PUBKEY,
 			signer,
 			relayHandler,
 			isStateless: true,
