@@ -20,58 +20,105 @@
 					<div class="text-center">
 						<h1 class="mb-4 text-4xl font-bold">Relatr</h1>
 						<p class="mx-auto max-w-2xl text-lg text-muted-foreground">
-							A decentralized web of trust metric service for Nostr that computes personalized trust
-							scores by combining social graph distances with profile validation metrics.
+							A decentralized trust metric service for Nostr that computes personalized trust scores
+							from any source pubkey's perspective using social graph distances and customizable
+							validations.
 						</p>
 					</div>
 
 					<div class="space-y-6">
 						<section>
-							<h2 class="mb-3 text-2xl font-semibold">Overview</h2>
+							<h2 class="mb-3 text-2xl font-semibold">How Relatr Works</h2>
 							<p class="text-muted-foreground">
-								Relatr measures relative trust between Nostr public keys by analyzing social graph
-								proximity and validating profile characteristics. It uses a weighted scoring system
-								to produce a comprehensive trust metric that can be personalized from any source
-								pubkey's perspective.
+								Relatr computes trust from a specific source pubkey's perspective. You provide a
+								source pubkey, Relatr finds related profiles, measures social graph distances,
+								computes validations, and combines them into a comprehensive trust score using
+								simple floating-point operations.
 							</p>
+							<p class="mt-3 text-muted-foreground">
+								Everyone can run their own Relatr instance and be the source pubkey. Validations are
+								customizable per instance, allowing different trust models to coexist in the
+								decentralized ecosystem.
+							</p>
+						</section>
+
+						<section>
+							<h2 class="mb-3 text-2xl font-semibold">Why Trust Should Be Relative</h2>
+							<div class="space-y-3">
+								<div class="rounded-lg bg-muted p-4">
+									<h4 class="mb-2 font-semibold">Diverse Contexts</h4>
+									<p class="text-sm text-muted-foreground">
+										Different users have varying criteria for trust. What matters to one user may be
+										irrelevant to another.
+									</p>
+								</div>
+								<div class="rounded-lg bg-muted p-4">
+									<h4 class="mb-2 font-semibold">Social Graph Proximity</h4>
+									<p class="text-sm text-muted-foreground">
+										Trust correlates strongly with social proximity - connections closer in your
+										social graph are generally more trustworthy to you.
+									</p>
+								</div>
+								<div class="rounded-lg bg-muted p-4">
+									<h4 class="mb-2 font-semibold">Personal Validation</h4>
+									<p class="text-sm text-muted-foreground">
+										Objective validations (like NIP-05 IDs) provide anchors, but their significance
+										depends on your personal trust framework.
+									</p>
+								</div>
+								<div class="rounded-lg bg-muted p-4">
+									<h4 class="mb-2 font-semibold">Reciprocal Relationships</h4>
+									<p class="text-sm text-muted-foreground">
+										Mutual relationships are important trust signals, but their meaning varies based
+										on your network and interaction history.
+									</p>
+								</div>
+							</div>
 						</section>
 
 						<section>
 							<h2 class="mb-3 text-2xl font-semibold">Features</h2>
 							<ul class="space-y-2 text-muted-foreground">
 								<li>
-									<strong>Social Graph Analysis:</strong> Calculates trust distances using nostr-social-graph
+									<strong>Source-Based Trust:</strong> All trust scores are computed from a specific
+									source pubkey's perspective
 								</li>
 								<li>
-									<strong>Profile Validation:</strong> Validates NIP-05, Lightning addresses, and event
-									publications
-								</li>
-								<li><strong>Reciprocity Checking:</strong> Verifies mutual follow relationships</li>
-								<li>
-									<strong>Configurable Scoring:</strong> Flexible weighting schemes for different trust
-									factors
+									<strong>Social Graph Distances:</strong> Measures proximity using nostr-social-graph
 								</li>
 								<li>
-									<strong>Persistent Caching:</strong> SQLite-based caching for performance optimization
+									<strong>Customizable Validations:</strong> Validations can be configured per instance
 								</li>
 								<li>
-									<strong>MCP Server Interface:</strong> Model Context Protocol API for integration
+									<strong>Simple Computation:</strong> Uses basic floating-point operations for transparency
+								</li>
+								<li>
+									<strong>Self-Hostable:</strong> Everyone can run their own Relatr instance
+								</li>
+								<li>
+									<strong>API Integration:</strong> CVM server interface for external applications
 								</li>
 							</ul>
 						</section>
 
 						<section>
-							<h3 class="mb-3 text-xl font-semibold">Trust Score Calculation</h3>
+							<h3 class="mb-3 text-xl font-semibold">Trust Calculation</h3>
 							<p class="mb-4 text-muted-foreground">
-								The trust score is computed using a weighted formula:
+								Trust scores are computed from source A to target B using a weighted formula:
 							</p>
 							<div class="mb-4 rounded-lg bg-muted p-4 text-center font-mono">
-								Trust Score = Σ(wi × vi) / Σ(wi)
+								Trust Score<sub>A→B</sub> = Σ(w<sub>i</sub> × v<sub>i</sub><sup>(A,B)</sup>) / Σ(w<sub
+									>i</sub
+								>)
 							</div>
 							<p class="mb-4 text-sm text-muted-foreground">Where:</p>
 							<ul class="mb-4 space-y-1 text-sm text-muted-foreground">
-								<li><code>wi</code> = weight for metric i</li>
-								<li><code>vi</code> = normalized value for metric i (0.0-1.0)</li>
+								<li><code>A</code> = source pubkey (your perspective)</li>
+								<li><code>B</code> = target pubkey</li>
+								<li>
+									<code>v<sub>i</sub><sup>(A,B)</sup></code> = metric value from A's viewpoint
+								</li>
+								<li><code>w<sub>i</sub></code> = customizable weights for your trust priorities</li>
 							</ul>
 						</section>
 
@@ -136,26 +183,25 @@
 						</section>
 
 						<section>
-							<h3 class="mb-3 text-xl font-semibold">Validation System Architecture</h3>
+							<h3 class="mb-3 text-xl font-semibold">Customizable Architecture</h3>
 							<p class="mb-4 text-muted-foreground">
-								Relatr uses a validation system with complete separation of concerns between
-								validation logic and weight management:
+								Relatr's validation system separates validation logic from weight management:
 							</p>
 							<div class="space-y-3 rounded-lg bg-muted p-4">
-								<h4 class="font-semibold">Core Principles:</h4>
+								<h4 class="font-semibold">Key Design:</h4>
 								<ul class="space-y-2 text-muted-foreground">
 									<li>
-										<strong>Pure Validation Plugins:</strong> Contain only validation logic, no weights
+										<strong>Pure Validation Plugins:</strong> Validation logic without weights
 									</li>
 									<li>
-										<strong>Dynamic Weight Profiles:</strong> Separate weight management from plugins
+										<strong>Dynamic Weight Profiles:</strong> Separate weight management
 									</li>
 									<li>
-										<strong>Flexible Configuration:</strong> Switch between weight schemes without recreating
-										plugins
+										<strong>Instance Customization:</strong> Each Relatr instance can have different
+										validations
 									</li>
 									<li>
-										<strong>Automatic Normalization:</strong> Handles weight sums that exceed 1.0 gracefully
+										<strong>Simple Operations:</strong> Basic floating-point math for transparency
 									</li>
 								</ul>
 							</div>
