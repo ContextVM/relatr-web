@@ -10,6 +10,7 @@
 	import { RelatrClient, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { Settings } from 'lucide-svelte';
+	import { DEFAULT_SERVER } from '$lib/constants';
 
 	let searchResults = $state<SearchProfilesOutput | null>(null);
 	let activeTab = $state<'search' | 'trust'>('search');
@@ -26,7 +27,7 @@
 
 	$effect(() => {
 		if (!relatrClient && !serverPubkey.trim()) {
-			relatrClient = new RelatrClient({ serverPubkey: undefined });
+			relatrClient = new RelatrClient({ serverPubkey: DEFAULT_SERVER });
 		}
 	});
 

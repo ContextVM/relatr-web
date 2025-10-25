@@ -1,4 +1,7 @@
 <script lang="ts">
+	import Badge from '$lib/components/ui/badge/badge.svelte';
+	import Button from '$lib/components/ui/button/button.svelte';
+	import { Github } from 'lucide-svelte';
 </script>
 
 <div class="flex min-h-screen flex-col bg-background">
@@ -20,30 +23,41 @@
 					<div class="text-center">
 						<h1 class="mb-4 text-4xl font-bold">Relatr</h1>
 						<p class="mx-auto max-w-2xl text-lg text-muted-foreground">
-							A decentralized trust metric service for Nostr that computes personalized trust scores
-							from any source pubkey's perspective using social graph distances and customizable
+							A decentralized trust metric service for Nostr that computes trust scores based in the
+							perspective of a source pubkey using social graph distances and customizable
 							validations.
 						</p>
 					</div>
+					<Badge>Open Source (MIT)</Badge>
+					<Badge>Self-Hostable</Badge>
+					<Badge>Easy to Deploy</Badge>
 
+					<a href="https://github.com/contextvm/relatr" class="mt-4">
+						<Github />
+					</a>
 					<div class="space-y-6">
 						<section>
 							<h2 class="mb-3 text-2xl font-semibold">How Relatr Works</h2>
 							<p class="text-muted-foreground">
-								Relatr computes trust from a specific source pubkey's perspective. You provide a
-								source pubkey, Relatr finds related profiles, measures social graph distances,
-								computes validations, and combines them into a comprehensive trust score using
-								simple floating-point operations.
+								Relatr computes trust from a specific source pubkey's perspective. When you run an
+								instance you can provide a source pubkey, and Relatr will find related profiles up
+								to a certain hop, measures social graph distances, computes validations, and
+								combines them into a comprehensive trust score using simple floating-point
+								operations.
 							</p>
 							<p class="mt-3 text-muted-foreground">
 								Everyone can run their own Relatr instance and be the source pubkey. Validations are
 								customizable per instance, allowing different trust models to coexist in the
-								decentralized ecosystem.
+								decentralized ecosystem. The only required configuration is the server secret key so
+								it can be exposed using ContextVM. The rest is optional, and by default comes with
+								sane defaults
 							</p>
+							<a href="https://github.com/contextvm/relatr"><Button>Run Relatr</Button></a>
 						</section>
 
 						<section>
-							<h2 class="mb-3 text-2xl font-semibold">Why Trust Should Be Relative</h2>
+							<h2 class="mb-3 text-2xl font-semibold">The concepts behind Relatr</h2>
+							<h3 class="mb-3">Why trust is always relative in a decentralized ecosystem</h3>
 							<div class="space-y-3">
 								<div class="rounded-lg bg-muted p-4">
 									<h4 class="mb-2 font-semibold">Diverse Contexts</h4>

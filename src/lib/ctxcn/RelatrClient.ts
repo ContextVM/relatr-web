@@ -6,6 +6,7 @@ import {
 	PrivateKeySigner,
 	ApplesauceRelayPool
 } from '@contextvm/sdk';
+import { DEFAULT_SERVER } from '$lib/constants';
 
 export interface CalculateTrustScoreInput {
 	targetPubkey: string;
@@ -94,8 +95,7 @@ export type Relatr = {
 };
 
 export class RelatrClient implements Relatr {
-	static readonly SERVER_PUBKEY =
-		'60a6070044e5788bf8a9d4d4e5aaa98a3853eec38c3ecc483ced19800fb6b7b0';
+	static readonly SERVER_PUBKEY = DEFAULT_SERVER;
 	private client: Client;
 	private transport: Transport;
 
