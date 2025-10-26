@@ -8,10 +8,10 @@
 	import TrustScoreDisplay from './TrustScoreDisplay.svelte';
 	import type { Relatr, CalculateTrustScoreOutput } from '$lib/ctxcn/RelatrClient.js';
 	import { X, EllipsisVertical } from 'lucide-svelte';
+	import { validateAndDecodePubkey } from '$lib/utils.nostr';
 
 	let {
 		targetPubkey = $bindable(''),
-		sourcePubkey = $bindable(''),
 		relatr
 	}: {
 		targetPubkey?: string;
@@ -26,7 +26,10 @@
 
 	async function calculateTrustScore() {
 		if (!targetPubkey.trim()) return;
-
+		if (!validateAndDecodePubkey(targetPubkey)) {
+			error = 'Invalid target pubkey';
+			return;
+		}
 		isLoading = true;
 		error = null;
 		result = null;
@@ -34,12 +37,7 @@
 		try {
 			const params: Parameters<typeof relatr.CalculateTrustScore> = [targetPubkey];
 
-			if (sourcePubkey.trim()) {
-				params.push(sourcePubkey);
-				if (weightingScheme !== 'default') {
-					params.push(weightingScheme);
-				}
-			} else if (weightingScheme !== 'default') {
+			if (weightingScheme !== 'default') {
 				params.push(undefined, weightingScheme);
 			}
 
@@ -62,7 +60,6 @@
 
 	function resetSearch() {
 		targetPubkey = '';
-		sourcePubkey = '';
 		weightingScheme = 'default';
 		isLoading = false;
 		error = null;
