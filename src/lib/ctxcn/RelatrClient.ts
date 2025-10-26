@@ -112,7 +112,7 @@ export class RelatrClient implements Relatr {
 
 		const {
 			privateKey,
-			relays = ['ws://localhost:10547'],
+			relays = ['wss://relay.contextvm.org'],
 			signer = new PrivateKeySigner(privateKey || ''),
 			relayHandler = new ApplesauceRelayPool(relays),
 			serverPubkey,
