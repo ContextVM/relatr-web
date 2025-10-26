@@ -23,6 +23,14 @@
 	let isLoading = $state(false);
 	let error = $state<string | null>(null);
 	let showAdvancedConfig = $state(false);
+	let searchInputElement = $state<HTMLInputElement | null>(null);
+
+	$effect(() => {
+		if (searchInputElement) {
+			searchInputElement.focus();
+		}
+	});
+
 	$effect(() => {
 		console.log($state.snapshot(extendToNostr));
 	});
@@ -79,6 +87,7 @@
 			<Input
 				id="search-input"
 				bind:value={query}
+				bind:ref={searchInputElement}
 				placeholder="Enter name or pubkey..."
 				class="flex-1"
 				onkeydown={(e: KeyboardEvent) => {

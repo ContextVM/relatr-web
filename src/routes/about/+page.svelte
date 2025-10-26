@@ -112,6 +112,10 @@
 								<div class="mb-6 rounded-lg bg-muted p-4 text-center font-mono">
 									Trust Score = Σ(w<sub>i</sub> × v<sub>i</sub>) / Σ(w<sub>i</sub>)
 								</div>
+								<p class="mb-4 text-muted-foreground">
+									Here, wᵢ represents the weight you assign to a metric, and vᵢ is its normalized
+									value, allowing for deep personalization.
+								</p>
 								<div class="space-y-4">
 									<div class="rounded-lg bg-muted p-4">
 										<h4 class="mb-2 font-semibold">1. Social Graph Proximity</h4>
