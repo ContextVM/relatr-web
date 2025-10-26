@@ -1,5 +1,5 @@
 {
 	"source": "src/lib/ctxcn",
 	"relays": ["ws://localhost:10547"],
-	"addedClients": ["60a6070044e5788bf8a9d4d4e5aaa98a3853eec38c3ecc483ced19800fb6b7b0"]
+	"addedClients": ["750682303c9f0ddad75941b49edc9d46e3ed306b9ee3335338a21a3e404c5fa3"]
 }

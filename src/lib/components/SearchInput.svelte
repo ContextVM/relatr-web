@@ -36,7 +36,6 @@
 			const searchParams: Parameters<typeof relatr.SearchProfiles> = [
 				query,
 				limit,
-				undefined,
 				weightingScheme,
 				extendToNostr
 			];

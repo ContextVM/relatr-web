@@ -277,3 +277,7 @@ export function pubkeyToHexColor(pubkey: string): string {
 
 	return `#${hexColor}`;
 }
+
+export function truncatePubkey(pubkey: string): string {
+	return pubkey.slice(0, 8) + '...' + pubkey.slice(-8);
+}

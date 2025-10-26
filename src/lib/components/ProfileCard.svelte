@@ -3,10 +3,19 @@
 	import { metadataRelays } from '$lib/services/relay-pool';
 	import { eventStore } from '../services/eventStore';
 	import { ProfileModel } from 'applesauce-core/models';
-	import { validateAndDecodePubkey, encodeNpub, pubkeyToHexColor } from '$lib/utils.nostr';
+	import {
+		validateAndDecodePubkey,
+		encodeNpub,
+		pubkeyToHexColor,
+		truncatePubkey
+	} from '$lib/utils.nostr';
 	import { Metadata } from 'nostr-tools/kinds';
 	import Badge from './ui/badge/badge.svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
+	import { npubEncode } from 'applesauce-core/helpers';
+	import { Copy, ExternalLink, Link2Off } from 'lucide-svelte';
+	import { copyToClipboard } from '$lib/utils';
+	import Button from './ui/button/button.svelte';
 	let {
 		pubkey,
 		mode = 'default',
@@ -93,12 +102,12 @@
 			tabindex="0"
 		>
 			{@render pfp(hexPubkey, $profile?.picture, 'sm')}
-			<span class="truncate text-sm font-medium">{getDisplayName()}</span>
+			<span class="max-w-[120px] truncate text-sm font-medium">{getDisplayName()}</span>
 		</button>
 	{:else}
 		<div class="flex items-center gap-2">
 			{@render pfp(hexPubkey, $profile?.picture, 'sm')}
-			<span class="truncate text-sm font-medium">{getDisplayName()}</span>
+			<span class="max-w-[120px] truncate text-sm font-medium">{getDisplayName()}</span>
 		</div>
 	{/if}
 	<!-- Search mode - compact with trust score -->
@@ -114,7 +123,8 @@
 			{@render pfp(hexPubkey, $profile?.picture, 'md')}
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center gap-2">
-					<span class="truncate font-medium">{getDisplayName()}</span>
+					<span class="max-w-[140px] truncate font-medium sm:max-w-[200px]">{getDisplayName()}</span
+					>
 					{#if trustScore !== undefined}
 						<span class="text-sm font-bold {getTrustScoreColor(trustScore)}">
 							{trustScore.toFixed(2)}
@@ -122,13 +132,13 @@
 					{/if}
 				</div>
 				{#if $profile?.nip05}
-					<span class="block truncate text-xs text-muted-foreground">
+					<span class="block max-w-[160px] truncate text-xs text-muted-foreground sm:max-w-[220px]">
 						{$profile?.nip05}
 					</span>
 				{/if}
 				{#if showPubkey}
-					<span class="text-xs text-muted-foreground">
-						{hexPubkey.slice(0, 8)}...{hexPubkey.slice(-8)}
+					<span class="max-w-[120px] truncate text-xs text-muted-foreground">
+						{truncatePubkey(hexPubkey)}
 					</span>
 				{/if}
 			</div>
@@ -146,7 +156,8 @@
 			{@render pfp(hexPubkey, $profile?.picture, 'md')}
 			<div class="min-w-0 flex-1">
 				<div class="flex items-center gap-2">
-					<span class="truncate font-medium">{getDisplayName()}</span>
+					<span class="max-w-[140px] truncate font-medium sm:max-w-[200px]">{getDisplayName()}</span
+					>
 					{#if trustScore !== undefined}
 						<span class="text-sm font-bold {getTrustScoreColor(trustScore)}">
 							{trustScore.toFixed(2)}
@@ -154,13 +165,13 @@
 					{/if}
 				</div>
 				{#if $profile?.nip05}
-					<span class="block truncate text-xs text-muted-foreground">
+					<span class="block max-w-[160px] truncate text-xs text-muted-foreground sm:max-w-[220px]">
 						{$profile?.nip05}
 					</span>
 				{/if}
 				{#if showPubkey}
-					<span class="text-xs text-muted-foreground">
-						{hexPubkey.slice(0, 8)}...{hexPubkey.slice(-8)}
+					<span class="max-w-[120px] truncate text-xs text-muted-foreground">
+						{truncatePubkey(hexPubkey)}
 					</span>
 				{/if}
 			</div>
@@ -177,19 +188,19 @@
 	<!-- Detailed mode - full profile information -->
 {:else if mode === 'detailed'}
 	<div class="space-y-4">
-		<div class="flex items-start gap-4">
+		<div class="flex flex-col gap-4 sm:flex-row sm:items-start">
 			{@render pfp(hexPubkey, $profile?.picture, 'lg')}
 			<div class="flex-1">
-				<h3 class="text-lg font-semibold">{getDisplayName()}</h3>
+				<h3 class="text-lg font-semibold wrap-break-word">{getDisplayName()}</h3>
 				{#if $profile?.nip05}
-					<p class="text-sm text-muted-foreground">{$profile?.nip05}</p>
+					<p class="text-sm break-all text-muted-foreground">{$profile?.nip05}</p>
 				{/if}
 				{#if $profile?.about}
-					<p class="mt-2 text-sm text-muted-foreground">{$profile?.about}</p>
+					<p class="mt-2 text-sm wrap-break-word text-muted-foreground">{$profile?.about}</p>
 				{/if}
 			</div>
 			{#if trustScore !== undefined}
-				<div class="text-right">
+				<div class="text-center sm:text-right">
 					<div class="text-2xl font-bold {getTrustScoreColor(trustScore)}">
 						{trustScore.toFixed(2)}
 					</div>
@@ -199,37 +210,73 @@
 		</div>
 
 		{#if showPubkey}
-			<div class="rounded bg-muted p-2 font-mono text-xs text-muted-foreground">
-				Pubkey: {hexPubkey}
+			<div class="flex flex-col gap-1">
+				<Badge
+					variant="secondary"
+					class="max-w-full truncate text-xs"
+					onclick={() => copyToClipboard(npubEncode(hexPubkey))}
+				>
+					Npub: {truncatePubkey(npubEncode(hexPubkey))}
+					<Copy class="h-4 w-4 shrink-0" />
+				</Badge>
+				<Badge
+					variant="secondary"
+					class="max-w-full truncate text-xs"
+					onclick={() => copyToClipboard(hexPubkey)}
+				>
+					Pubkey: {truncatePubkey(hexPubkey)}
+					<Copy class="h-4 w-4 shrink-0" />
+				</Badge>
+			</div>
+			<div class="flex flex-col gap-2 sm:flex-row">
+				<Button
+					href={`https://nostr.at/${npubEncode(hexPubkey)}`}
+					target="_blank"
+					variant="ghost"
+					class="w-full text-xs sm:w-auto"
+				>
+					Open in external client
+					<ExternalLink class="h-4 w-4" />
+				</Button>
+				<Button
+					href={`nostr:${npubEncode(hexPubkey)}`}
+					variant="ghost"
+					class="w-full text-xs sm:w-auto"
+				>
+					Open in native client
+					<ExternalLink class="h-4 w-4" />
+				</Button>
 			</div>
 		{/if}
 
 		<!-- All profile metadata in detailed mode -->
 		{#if $profile && Object.keys($profile).length > 0}
 			<div class="space-y-3">
-				<div class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+				<div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
 					{#if $profile?.name}
 						<div>
 							<span class="font-medium">Name:</span>
-							<span class="ml-2 text-muted-foreground">{$profile?.name}</span>
+							<span class="ml-2 wrap-break-word text-muted-foreground">{$profile?.name}</span>
 						</div>
 					{/if}
 					{#if $profile?.display_name}
 						<div>
 							<span class="font-medium">Display Name:</span>
-							<span class="ml-2 text-muted-foreground">{$profile?.display_name}</span>
+							<span class="ml-2 wrap-break-word text-muted-foreground"
+								>{$profile?.display_name}</span
+							>
 						</div>
 					{/if}
 					{#if $profile?.nip05}
 						<div>
 							<span class="font-medium">NIP-05:</span>
-							<span class="ml-2 text-muted-foreground">{$profile?.nip05}</span>
+							<span class="ml-2 break-all text-muted-foreground">{$profile?.nip05}</span>
 						</div>
 					{/if}
 					{#if $profile?.lud16}
 						<div>
 							<span class="font-medium">Lightning:</span>
-							<span class="ml-2 text-muted-foreground">{$profile?.lud16}</span>
+							<span class="ml-2 break-all text-muted-foreground">{$profile?.lud16}</span>
 						</div>
 					{/if}
 					{#if $profile?.website}
@@ -241,14 +288,14 @@
 								rel="noopener noreferrer"
 								class="ml-2 text-muted-foreground underline hover:text-primary"
 							>
-								{$profile?.website}
+								<span class="break-all">{$profile?.website}</span>
 							</a>
 						</div>
 					{/if}
 				</div>
 
 				<!-- Additional metadata fields -->
-				<div class="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+				<div class="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
 					{#if $profile?.display_name && $profile?.display_name !== $profile?.name}
 						<!-- Already handled above -->
 					{/if}
@@ -273,9 +320,9 @@
 	>
 		{@render pfp(hexPubkey, $profile?.picture)}
 		<div class="flex flex-col">
-			<span class="font-semibold">{getDisplayName()}</span>
+			<span class="max-w-[150px] truncate font-semibold">{getDisplayName()}</span>
 			{#if $profile?.nip05}
-				<span class="text-sm text-gray-400">
+				<span class="max-w-[150px] truncate text-sm text-gray-400">
 					{$profile?.nip05}
 				</span>
 			{/if}
@@ -292,9 +339,9 @@
 	<div class="flex items-center gap-2">
 		{@render pfp(hexPubkey, $profile?.picture)}
 		<div class="flex flex-col">
-			<span class="font-semibold">{getDisplayName()}</span>
+			<span class="max-w-[150px] truncate font-semibold">{getDisplayName()}</span>
 			{#if $profile?.nip05}
-				<span class="text-sm text-gray-400">
+				<span class="max-w-[150px] truncate text-sm text-gray-400">
 					{$profile?.nip05}
 				</span>
 			{/if}

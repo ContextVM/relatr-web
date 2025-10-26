@@ -2,6 +2,7 @@
 	import Badge from '$lib/components/ui/badge/badge.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Github } from 'lucide-svelte';
+	import * as Tabs from '$lib/components/ui/tabs/index.js';
 </script>
 
 <div class="flex min-h-screen flex-col bg-background">
@@ -10,9 +11,9 @@
 			<div class="w-full max-w-2xl space-y-8">
 				<!-- Logo at the top -->
 				<div class="mb-8 flex justify-center">
-					<img src="/relatr-logo2.svg" alt="Relatr Logo" class="h-42 w-auto dark:hidden" />
+					<img src="/relatr-logo-min.svg" alt="Relatr Logo" class="h-42 w-auto dark:hidden" />
 					<img
-						src="/relatr-logo2-white.svg"
+						src="/relatr-logo-white-min.svg"
 						alt="Relatr Logo"
 						class="hidden h-42 w-auto dark:block"
 					/>
@@ -22,205 +23,247 @@
 				<div class="space-y-6">
 					<div class="text-center">
 						<h1 class="mb-4 text-4xl font-bold">Relatr</h1>
-						<p class="mx-auto max-w-2xl text-lg text-muted-foreground">
-							A decentralized trust metric service for Nostr that computes trust scores based in the
-							perspective of a source pubkey using social graph distances and customizable
-							validations.
-						</p>
+						<p class="mx-auto max-w-2xl text-lg text-muted-foreground">About</p>
 					</div>
-					<Badge>Open Source (MIT)</Badge>
-					<Badge>Self-Hostable</Badge>
-					<Badge>Easy to Deploy</Badge>
+					<div class="flex flex-wrap justify-center gap-2">
+						<Badge>Open Source (MIT)</Badge>
+						<Badge>Self-Hostable</Badge>
+						<Badge>Easy to Deploy</Badge>
+					</div>
 
-					<a href="https://github.com/contextvm/relatr" class="mt-4">
-						<Github />
-					</a>
-					<div class="space-y-6">
-						<section>
-							<h2 class="mb-3 text-2xl font-semibold">How Relatr Works</h2>
-							<p class="text-muted-foreground">
-								Relatr computes trust from a specific source pubkey's perspective. When you run an
-								instance you can provide a source pubkey, and Relatr will find related profiles up
-								to a certain hop, measures social graph distances, computes validations, and
-								combines them into a comprehensive trust score using simple floating-point
-								operations.
-							</p>
-							<p class="mt-3 text-muted-foreground">
-								Everyone can run their own Relatr instance and be the source pubkey. Validations are
-								customizable per instance, allowing different trust models to coexist in the
-								decentralized ecosystem. The only required configuration is the server secret key so
-								it can be exposed using ContextVM. The rest is optional, and by default comes with
-								sane defaults
-							</p>
-							<a href="https://github.com/contextvm/relatr"><Button>Run Relatr</Button></a>
-						</section>
+					<div class="flex justify-center">
+						<a href="https://github.com/contextvm/relatr" target="_blank" class="mt-4">
+							<Github />
+						</a>
+					</div>
 
-						<section>
-							<h2 class="mb-3 text-2xl font-semibold">The concepts behind Relatr</h2>
-							<h3 class="mb-3">Why trust is always relative in a decentralized ecosystem</h3>
-							<div class="space-y-3">
-								<div class="rounded-lg bg-muted p-4">
-									<h4 class="mb-2 font-semibold">Diverse Contexts</h4>
+					<!-- Tabs Section -->
+					<Tabs.Root value="what-why-how" class="w-full">
+						<Tabs.List class="grid w-full grid-cols-3">
+							<Tabs.Trigger value="what-why-how">What, Why & How</Tabs.Trigger>
+							<Tabs.Trigger value="run">Run</Tabs.Trigger>
+							<Tabs.Trigger value="integrate">Integrate</Tabs.Trigger>
+						</Tabs.List>
+
+						<!-- What, Why & How Tab -->
+						<Tabs.Content value="what-why-how" class="space-y-6 pt-6">
+							<section class="flex flex-wrap justify-center gap-2">
+								<h2 class="mb-4 text-2xl font-semibold">What is Relatr?</h2>
+								<p class="mb-4 text-muted-foreground">
+									Relatr is a decentralized trust metric service for the Nostr ecosystem that
+									computes personalized trust scores from the unique perspective of a public key. It
+									combines source public key social connections with customizable validation
+									criteria to create meaningful trust assessments.
+								</p>
+								<p class="text-muted-foreground">
+									Trust is not an absolute quantity but a deeply personal and contextual phenomenon.
+									Where centralized systems impose universal standards, Relatr embraces the
+									relative, dynamic nature of trust, empowering you to define what trust means in
+									your context.
+								</p>
+								<Button
+									href="https://nostr.at/naddr1qvzqqqr4gupzq6ehsrhjjuh885mshp9ru50842dwxjl5z2fcmnaan30k8v3pg9kgqq2hjjt5vd45x6msd428ztt0wazn2st8t968zyx8g23"
+									target="_blank">Read our article</Button
+								>
+							</section>
+
+							<section class="flex flex-wrap justify-center gap-2">
+								<h2 class="mb-4 text-2xl font-semibold">Why Decentralized Trust Matters</h2>
+								<div class="space-y-4">
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">Personal Sovereignty</h4>
+										<p class="text-sm text-muted-foreground">
+											You control your trust criteria. No platform dictates what makes someone
+											trustworthy to you. Your relationships, your values, your context - these
+											shape your unique trust framework.
+										</p>
+									</div>
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">Transparent Algorithms</h4>
+										<p class="text-sm text-muted-foreground">
+											Relatr's open-source computation means you can audit and understand exactly
+											how trust scores are calculated. No black boxes, no hidden agendas - just
+											transparent mathematics you can verify.
+										</p>
+									</div>
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">No Vendor Lock-in</h4>
+										<p class="text-sm text-muted-foreground">
+											Run your own instance or choose from multiple providers. Your trust data and
+											criteria belong to you, not to any single platform or service provider.
+										</p>
+									</div>
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">Censorship Resistance</h4>
+										<p class="text-sm text-muted-foreground">
+											By distributing trust computation across many instances, Relatr creates a
+											resilient ecosystem resistant to censorship and single points of failure.
+										</p>
+									</div>
+								</div>
+							</section>
+
+							<section class="flex flex-wrap justify-center gap-2">
+								<h2 class="mb-4 text-2xl font-semibold">How Relatr Computes Trust</h2>
+								<p class="mb-4 text-muted-foreground">
+									Relatr uses a simple yet powerful weighted formula to combine multiple trust
+									signals into a single, meaningful score:
+								</p>
+								<div class="mb-6 rounded-lg bg-muted p-4 text-center font-mono">
+									Trust Score = Σ(w<sub>i</sub> × v<sub>i</sub>) / Σ(w<sub>i</sub>)
+								</div>
+								<div class="space-y-4">
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">1. Social Graph Proximity</h4>
+										<p class="text-sm text-muted-foreground">
+											Relatr measures social distance between your public key and target keys using
+											nostr-social-graph library. Direct relationships carry the most weight, while
+											trust decays exponentially across network hops - capturing the essence of "I
+											trust you, so I can extend a degree of trust to those you trust."
+										</p>
+									</div>
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">2. Objective Profile Validations</h4>
+										<p class="text-sm text-muted-foreground">
+											Beyond social ties, Relatr incorporates objective, verifiable data including
+											NIP-05 domain validation, Lightning Network addresses, relay lists, and mutual
+											relationships. The framework is extensible, allowing new validation plugins to
+											be added over time.
+										</p>
+									</div>
+									<div class="rounded-lg bg-muted p-4">
+										<h4 class="mb-2 font-semibold">3. Customizable Weights</h4>
+										<p class="text-sm text-muted-foreground">
+											You control the importance of each metric. Want social proximity to matter
+											more than domain verification? Adjust the weights to match your personal trust
+											priorities. The default weights provide a balanced starting point that you can
+											fine-tune.
+										</p>
+									</div>
+								</div>
+							</section>
+						</Tabs.Content>
+
+						<!-- Run Tab -->
+						<Tabs.Content value="run" class="space-y-6 pt-6">
+							<section>
+								<h2 class="mb-4 text-2xl font-semibold">Run Your Own Relatr Instance</h2>
+								<p class="mb-4 text-muted-foreground">
+									Relatr's architecture embodies its principles. It is not a centralized service but
+									a protocol that anyone can run. This is made possible by <strong>ContextVM</strong
+									>, a decentralized protocol that enables services to communicate over the Nostr
+									network.
+								</p>
+								<p class="mb-4 text-muted-foreground">
+									Running Relatr as a ContextVM service makes it incredibly accessible. Anyone can
+									deploy their own trust engine from source or a Docker container in environments
+									like Umbrel or Start9, often with a one-click install. This turns any
+									internet-connected device into a personal trust server without complex networking
+									or hosting costs.
+								</p>
+							</section>
+
+							<section class="flex flex-col gap-2">
+								<h3 class="mb-3 text-xl font-semibold">Quick Start</h3>
+								<div class="space-y-4 rounded-lg bg-muted p-4">
+									<h4 class="font-semibold">Using Docker (Recommended)</h4>
+									<div class="rounded bg-background p-3 font-mono text-sm">
+										docker run -d -e SERVER_SECRET_KEY=your_server_privkey_here -v
+										$(pwd)/data:/usr/src/app/data ghcr.io/contextvm/relatr:latest
+									</div>
 									<p class="text-sm text-muted-foreground">
-										Different users have varying criteria for trust. What matters to one user may be
-										irrelevant to another.
+										Relatr is designed to be lightweight and should run on almost any device. The
+										easiest way to get started is with the official Docker image.
+									</p>
+									<strong>Note:</strong> Create the data dir with your user if you want to persist the
+									database.
+								</div>
+
+								<div class="space-y-4 rounded-lg bg-muted p-4">
+									<h4 class="font-semibold">From Source</h4>
+									<div class="space-y-2">
+										<div class="rounded bg-background p-3 font-mono text-sm">
+											git clone https://github.com/contextvm/relatr
+										</div>
+										<div class="rounded bg-background p-3 font-mono text-sm">
+											cd relatr && bun install
+										</div>
+										<div class="rounded bg-background p-3 font-mono text-sm">bun run mcp</div>
+									</div>
+								</div>
+							</section>
+
+							<section>
+								<h3 class="mb-3 text-xl font-semibold">Configuration</h3>
+								<div class="space-y-3 rounded-lg bg-muted p-4">
+									<h4 class="font-semibold">Required Settings:</h4>
+									<ul class="space-y-2 text-muted-foreground">
+										<li>
+											<strong>Server Secret Key:</strong> For ContextVM server identification
+										</li>
+									</ul>
+									<p class="mt-2 text-sm text-muted-foreground">
+										Each Relatr instance is identified by the public key of its ContextVM server.
+										You can configure your own source pubkey or use the default.
 									</p>
 								</div>
-								<div class="rounded-lg bg-muted p-4">
-									<h4 class="mb-2 font-semibold">Social Graph Proximity</h4>
-									<p class="text-sm text-muted-foreground">
-										Trust correlates strongly with social proximity - connections closer in your
-										social graph are generally more trustworthy to you.
-									</p>
-								</div>
-								<div class="rounded-lg bg-muted p-4">
-									<h4 class="mb-2 font-semibold">Personal Validation</h4>
-									<p class="text-sm text-muted-foreground">
-										Objective validations (like NIP-05 IDs) provide anchors, but their significance
-										depends on your personal trust framework.
-									</p>
-								</div>
-								<div class="rounded-lg bg-muted p-4">
-									<h4 class="mb-2 font-semibold">Reciprocal Relationships</h4>
-									<p class="text-sm text-muted-foreground">
-										Mutual relationships are important trust signals, but their meaning varies based
-										on your network and interaction history.
-									</p>
-								</div>
+							</section>
+
+							<div class="flex justify-center">
+								<a href="https://github.com/contextvm/relatr">
+									<Button>View Full Documentation</Button>
+								</a>
 							</div>
-						</section>
+						</Tabs.Content>
 
-						<section>
-							<h2 class="mb-3 text-2xl font-semibold">Features</h2>
-							<ul class="space-y-2 text-muted-foreground">
-								<li>
-									<strong>Source-Based Trust:</strong> All trust scores are computed from a specific
-									source pubkey's perspective
-								</li>
-								<li>
-									<strong>Social Graph Distances:</strong> Measures proximity using nostr-social-graph
-								</li>
-								<li>
-									<strong>Customizable Validations:</strong> Validations can be configured per instance
-								</li>
-								<li>
-									<strong>Simple Computation:</strong> Uses basic floating-point operations for transparency
-								</li>
-								<li>
-									<strong>Self-Hostable:</strong> Everyone can run their own Relatr instance
-								</li>
-								<li>
-									<strong>API Integration:</strong> CVM server interface for external applications
-								</li>
-							</ul>
-						</section>
+						<!-- Integrate Tab -->
+						<Tabs.Content value="integrate" class="space-y-6 pt-6">
+							<section>
+								<h2 class="mb-4 text-2xl font-semibold">Seamless Integration</h2>
+								<p class="mb-4 text-muted-foreground">
+									The benefits of ContextVM extend to developers. Integrating Relatr into clients is
+									remarkably simple, thanks to a tool called <strong>CtxCn</strong>. It's a
+									command-line utility that generates a fully-typed Relatr client directly into an
+									application's codebase.
+								</p>
+							</section>
 
-						<section>
-							<h3 class="mb-3 text-xl font-semibold">Trust Calculation</h3>
-							<p class="mb-4 text-muted-foreground">
-								Trust scores are computed from source A to target B using a weighted formula:
-							</p>
-							<div class="mb-4 rounded-lg bg-muted p-4 text-center font-mono">
-								Trust Score<sub>A→B</sub> = Σ(w<sub>i</sub> × v<sub>i</sub><sup>(A,B)</sup>) / Σ(w<sub
-									>i</sub
-								>)
-							</div>
-							<p class="mb-4 text-sm text-muted-foreground">Where:</p>
-							<ul class="mb-4 space-y-1 text-sm text-muted-foreground">
-								<li><code>A</code> = source pubkey (your perspective)</li>
-								<li><code>B</code> = target pubkey</li>
-								<li>
-									<code>v<sub>i</sub><sup>(A,B)</sup></code> = metric value from A's viewpoint
-								</li>
-								<li><code>w<sub>i</sub></code> = customizable weights for your trust priorities</li>
-							</ul>
-						</section>
+							<section>
+								<h3 class="mb-3 text-xl font-semibold">Quick Integration</h3>
+								<div class="space-y-4 rounded-lg bg-muted p-4">
+									<h4 class="font-semibold">Single Command Integration</h4>
+									<div class="rounded bg-background p-3 font-mono text-sm">
+										npx @contextvm/ctxcn add "relatr-server-pubkey"
+									</div>
+									<p class="text-sm text-muted-foreground">
+										This single command generates a fully-typed Relatr client in your project, ready
+										to use with your preferred Relatr instance.
+									</p>
+								</div>
+							</section>
 
-						<section>
-							<h3 class="mb-3 text-xl font-semibold">Metrics</h3>
-							<div class="overflow-x-auto">
-								<table class="w-full border-collapse">
-									<thead>
-										<tr class="border-b">
-											<th class="px-3 py-2 text-left font-medium">Metric</th>
-											<th class="px-3 py-2 text-left font-medium">Type</th>
-											<th class="px-3 py-2 text-left font-medium">Weight</th>
-											<th class="px-3 py-2 text-left font-medium">Description</th>
-										</tr>
-									</thead>
-									<tbody>
-										<tr class="border-b">
-											<td class="px-3 py-2">Distance</td>
-											<td class="px-3 py-2">Float (0-1)</td>
-											<td class="px-3 py-2">0.5</td>
-											<td class="px-3 py-2">Social graph proximity with decay</td>
-										</tr>
-										<tr class="border-b">
-											<td class="px-3 py-2">NIP-05</td>
-											<td class="px-3 py-2">Binary (0/1)</td>
-											<td class="px-3 py-2">0.15</td>
-											<td class="px-3 py-2">Valid NIP-05 identifier</td>
-										</tr>
-										<tr class="border-b">
-											<td class="px-3 py-2">Lightning</td>
-											<td class="px-3 py-2">Binary (0/1)</td>
-											<td class="px-3 py-2">0.1</td>
-											<td class="px-3 py-2">Lightning Network address</td>
-										</tr>
-										<tr class="border-b">
-											<td class="px-3 py-2">Event 10002</td>
-											<td class="px-3 py-2">Binary (0/1)</td>
-											<td class="px-3 py-2">0.1</td>
-											<td class="px-3 py-2">Published relay list</td>
-										</tr>
-										<tr class="border-b">
-											<td class="px-3 py-2">Reciprocity</td>
-											<td class="px-3 py-2">Binary (0/1)</td>
-											<td class="px-3 py-2">0.15</td>
-											<td class="px-3 py-2">Mutual follow relationship</td>
-										</tr>
-										<tr class="border-b">
-											<td class="px-3 py-2">Exact Match</td>
-											<td class="px-3 py-2">Binary (0/1)</td>
-											<td class="px-3 py-2">0.05</td>
-											<td class="px-3 py-2">Exact name/NIP-05 match</td>
-										</tr>
-										<tr class="border-b">
-											<td class="px-3 py-2">Root NIP-05</td>
-											<td class="px-3 py-2">Binary (0/1)</td>
-											<td class="px-3 py-2">0.05</td>
-											<td class="px-3 py-2">Root domain NIP-05 identifier</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
-						</section>
-
-						<section>
-							<h3 class="mb-3 text-xl font-semibold">Customizable Architecture</h3>
-							<p class="mb-4 text-muted-foreground">
-								Relatr's validation system separates validation logic from weight management:
-							</p>
-							<div class="space-y-3 rounded-lg bg-muted p-4">
-								<h4 class="font-semibold">Key Design:</h4>
+							<section>
+								<h3 class="mb-3 text-xl font-semibold">Features for Developers</h3>
 								<ul class="space-y-2 text-muted-foreground">
 									<li>
-										<strong>Pure Validation Plugins:</strong> Validation logic without weights
+										<strong>Fully Typed Client:</strong> Auto-generated TypeScript definitions
 									</li>
 									<li>
-										<strong>Dynamic Weight Profiles:</strong> Separate weight management
+										<strong>Source Code Ownership:</strong> No opaque dependencies
 									</li>
 									<li>
-										<strong>Instance Customization:</strong> Each Relatr instance can have different
-										validations
+										<strong>Easy Maintenance:</strong> Simple updates with CtxCn
 									</li>
 									<li>
-										<strong>Simple Operations:</strong> Basic floating-point math for transparency
+										<strong>Multiple Instance Support:</strong> Users can choose their trust provider
+									</li>
+									<li>
+										<strong>No Vendor Lock-in:</strong> Always free to switch Relatr instances
 									</li>
 								</ul>
-							</div>
-						</section>
-					</div>
+							</section>
+						</Tabs.Content>
+					</Tabs.Root>
 				</div>
 			</div>
 		</div>

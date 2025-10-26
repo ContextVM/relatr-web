@@ -2,6 +2,7 @@
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
+	import ServerStats from '$lib/components/ServerStats.svelte';
 	import Button from '$lib/components/ui/button/button.svelte';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
@@ -60,7 +61,7 @@
 						<TabsList class="flex w-full justify-between gap-4">
 							<div class="grid w-full grid-cols-2">
 								<TabsTrigger value="search">Profile Search</TabsTrigger>
-								<TabsTrigger value="trust">Trust Score Calculator</TabsTrigger>
+								<TabsTrigger value="trust">Trust Score</TabsTrigger>
 							</div>
 							<Popover.Root>
 								<Popover.Trigger
@@ -109,16 +110,14 @@
 											>
 												Set Server
 											</Button>
-											<div class="space-y-1">
-												<p class="text-xs break-all text-muted-foreground">
-													Current: {serverPubkey || 'Using default server'}
-												</p>
-												{#if serverPubkey}
-													<p class="font-mono text-xs break-all text-muted-foreground">
-														{serverPubkey}
-													</p>
-												{/if}
-											</div>
+										</div>
+
+										<!-- Server Stats Section -->
+										<div class="border-t pt-4">
+											<ServerStats
+												relatr={relatrClient}
+												serverPubkey={serverPubkey || DEFAULT_SERVER}
+											/>
 										</div>
 									</div>
 								</Popover.Content>

@@ -9,9 +9,9 @@
 		<div class="flex items-center justify-between">
 			<a href="/">
 				<div class="flex items-center gap-4">
-					<img src="/relatr-logo2.svg" alt="Relatr Logo" class="h-12 w-auto dark:hidden" />
+					<img src="/relatr-logo-min.svg" alt="Relatr Logo" class="h-12 w-auto dark:hidden" />
 					<img
-						src="/relatr-logo2-white.svg"
+						src="/relatr-logo-white-min.svg"
 						alt="Relatr Logo"
 						class="hidden h-12 w-auto dark:block"
 					/>
@@ -32,10 +32,10 @@
 				</nav>
 				<Button onclick={toggleMode} variant="outline" size="icon">
 					<SunIcon
-						class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 !transition-all dark:scale-0 dark:-rotate-90"
+						class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all! dark:scale-0 dark:-rotate-90"
 					/>
 					<MoonIcon
-						class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 !transition-all dark:scale-100 dark:rotate-0"
+						class="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all! dark:scale-100 dark:rotate-0"
 					/>
 					<span class="sr-only">Toggle theme</span>
 				</Button>
