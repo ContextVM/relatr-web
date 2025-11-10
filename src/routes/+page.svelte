@@ -8,10 +8,19 @@
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
 	import * as Popover from '$lib/components/ui/popover/index.js';
+	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { RelatrClient, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
 	import { isHexKey } from 'applesauce-core/helpers';
-	import { Settings } from 'lucide-svelte';
+	import { Settings, Trash2, Clock } from 'lucide-svelte';
 	import { DEFAULT_SERVER } from '$lib/constants';
+	import {
+		getServerHistory,
+		addServerToHistory,
+		removeServerFromHistory,
+		type ServerHistoryItem
+	} from '$lib/utils';
+	import { getPubkeyDisplay } from '$lib/utils.nostr';
+	import { page } from '$app/state';
 
 	let searchResults = $state<SearchProfilesOutput | null>(null);
 	let activeTab = $state<'search' | 'trust'>('search');
@@ -20,17 +29,58 @@
 	let serverPubkey = $state('');
 	let relatrClient = $state<RelatrClient | null>(null);
 	let validationError = $state<string | null>(null);
+	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
 
 	function handleProfileClick(pubkey: string) {
 		selectedPubkey = pubkey;
 		activeTab = 'trust';
 	}
 
+	// Reactive query parameter for server configuration
+	let queryServerPubkey = $state(page.url.searchParams.get('s'));
+
 	$effect(() => {
-		if (!relatrClient && !serverPubkey.trim()) {
-			relatrClient = new RelatrClient({ serverPubkey: DEFAULT_SERVER });
+		// Initialize client if not already done
+		if (!relatrClient) {
+			let initialServerPubkey = DEFAULT_SERVER;
+
+			// Use query parameter if valid, otherwise use default
+			if (queryServerPubkey && isHexKey(queryServerPubkey)) {
+				initialServerPubkey = queryServerPubkey;
+				serverPubkeyInput = queryServerPubkey;
+				serverPubkey = queryServerPubkey;
+			}
+
+			relatrClient = new RelatrClient({ serverPubkey: initialServerPubkey });
+			addServerToHistory(initialServerPubkey);
+			serverHistory = getServerHistory();
 		}
 	});
+
+	// React to changes in query parameter
+	$effect(() => {
+		if (queryServerPubkey && isHexKey(queryServerPubkey) && relatrClient) {
+			// Only switch if the query param is different from current server
+			if (queryServerPubkey !== serverPubkey) {
+				switchToServer(queryServerPubkey);
+			}
+		}
+	});
+
+	/**
+	 * Switch to a new server and update history appropriately
+	 */
+	function switchToServer(newServerPubkey: string) {
+		// Update UI state
+		serverPubkeyInput = newServerPubkey;
+		serverPubkey = newServerPubkey;
+		relatrClient = new RelatrClient({ serverPubkey: newServerPubkey });
+
+		addServerToHistory(newServerPubkey);
+
+		// Refresh history display
+		serverHistory = getServerHistory();
+	}
 
 	function handleServerPubkeyChange() {
 		const trimmedPubkey = serverPubkeyInput.trim();
@@ -41,8 +91,20 @@
 		}
 
 		validationError = null;
-		serverPubkey = trimmedPubkey;
-		relatrClient = new RelatrClient({ serverPubkey: serverPubkey || undefined });
+
+		// Use the new server or default if empty
+		const newServer = trimmedPubkey || DEFAULT_SERVER;
+		switchToServer(newServer);
+	}
+
+	function connectToServerFromHistory(pubkey: string) {
+		switchToServer(pubkey);
+	}
+
+	function removeServerFromHistoryHandler(pubkey: string, event: Event) {
+		event.stopPropagation();
+		removeServerFromHistory(pubkey);
+		serverHistory = getServerHistory();
 	}
 
 	function validateInput() {
@@ -111,6 +173,50 @@
 												Set Server
 											</Button>
 										</div>
+
+										<!-- Server History Section -->
+										{#if serverHistory.length > 0}
+											<div class="border-t pt-4">
+												<div class="space-y-2">
+													<div class="flex items-center gap-2 text-sm font-medium">
+														<Clock class="h-4 w-4" />
+														<span>Recent Servers</span>
+													</div>
+													<div class="max-h-48 space-y-2 overflow-y-auto">
+														{#each serverHistory as server}
+															<Card
+																class="group cursor-pointer px-0 py-2 transition-colors hover:bg-accent hover:text-accent-foreground {server.pubkey ===
+																(serverPubkey || DEFAULT_SERVER)
+																	? 'border-orange-200 bg-orange-50'
+																	: ''}"
+																onclick={() => connectToServerFromHistory(server.pubkey)}
+															>
+																<CardContent class="">
+																	<div class="flex items-center justify-between">
+																		<div class="flex flex-col">
+																			<span class="font-mono text-xs"
+																				>{getPubkeyDisplay(server.pubkey)}</span
+																			>
+																			<span class="text-xs text-muted-foreground">
+																				{new Date(server.lastConnected).toLocaleDateString()}
+																			</span>
+																		</div>
+																		<button
+																			type="button"
+																			class="hover:text-destructive-foreground rounded-sm p-1 opacity-0 transition-all group-hover:opacity-100 hover:bg-destructive"
+																			onclick={(e) =>
+																				removeServerFromHistoryHandler(server.pubkey, e)}
+																		>
+																			<Trash2 class="h-3 w-3" />
+																		</button>
+																	</div>
+																</CardContent>
+															</Card>
+														{/each}
+													</div>
+												</div>
+											</div>
+										{/if}
 
 										<!-- Server Stats Section -->
 										<div class="border-t pt-4">

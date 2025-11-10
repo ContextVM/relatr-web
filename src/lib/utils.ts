@@ -43,3 +43,90 @@ export async function copyToClipboard(data: BlobPart, mimeType = 'text/plain') {
 		console.log(e);
 	}
 }
+
+/**
+ * Local storage utilities for server history management
+ */
+const SERVER_HISTORY_KEY = 'relatr-server-history';
+
+export interface ServerHistoryItem {
+	pubkey: string;
+	lastConnected: number;
+	displayName?: string;
+}
+
+/**
+ * Get server history from local storage
+ */
+export function getServerHistory(): ServerHistoryItem[] {
+	if (typeof window === 'undefined') return [];
+
+	try {
+		const stored = localStorage.getItem(SERVER_HISTORY_KEY);
+		return stored ? JSON.parse(stored) : [];
+	} catch (error) {
+		console.error('Error reading server history from localStorage:', error);
+		return [];
+	}
+}
+
+/**
+ * Save server history to local storage
+ */
+export function saveServerHistory(history: ServerHistoryItem[]): void {
+	if (typeof window === 'undefined') return;
+
+	try {
+		localStorage.setItem(SERVER_HISTORY_KEY, JSON.stringify(history));
+	} catch (error) {
+		console.error('Error saving server history to localStorage:', error);
+	}
+}
+
+/**
+ * Add a server to history or update its last connected timestamp
+ */
+export function addServerToHistory(pubkey: string): void {
+	if (!pubkey) return;
+
+	const history = getServerHistory();
+
+	// Remove existing entry if present (we'll add it back with updated timestamp)
+	const filteredHistory = history.filter((item) => item.pubkey !== pubkey);
+
+	// Add new entry at the beginning (most recent)
+	const updatedHistory = [
+		{
+			pubkey,
+			lastConnected: Date.now()
+		},
+		...filteredHistory
+	];
+
+	// Limit to 10 entries
+	const limitedHistory = updatedHistory.slice(0, 10);
+
+	saveServerHistory(limitedHistory);
+}
+
+/**
+ * Remove a server from history
+ */
+export function removeServerFromHistory(pubkey: string): void {
+	const history = getServerHistory();
+	const filteredHistory = history.filter((item) => item.pubkey !== pubkey);
+	saveServerHistory(filteredHistory);
+}
+
+/**
+ * Clear all server history
+ */
+export function clearServerHistory(): void {
+	if (typeof window === 'undefined') return;
+
+	try {
+		localStorage.removeItem(SERVER_HISTORY_KEY);
+	} catch (error) {
+		console.error('Error clearing server history from localStorage:', error);
+	}
+}
