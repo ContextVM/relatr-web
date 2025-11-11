@@ -12,7 +12,7 @@
 	import { Server, Database, Users, Link, Copy } from 'lucide-svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import { copyToClipboard } from '$lib/utils';
-	import { truncatePubkey } from '$lib/utils.nostr';
+	import { pubkeyToHexColor, truncatePubkey } from '$lib/utils.nostr';
 
 	let { relatr, serverPubkey } = $props<{
 		relatr: RelatrClient;
@@ -77,6 +77,10 @@
 		</CardDescription>
 
 		<Badge variant="outline" class="text-xs" onclick={() => copyToClipboard(serverPubkey)}>
+			<div
+				class="h-2 w-2 rounded-full"
+				style="background-color: {pubkeyToHexColor(serverPubkey)}"
+			></div>
 			{truncatePubkey(serverPubkey)}
 			<Copy class="h-4 w-4" />
 		</Badge>

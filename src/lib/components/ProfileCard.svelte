@@ -13,7 +13,7 @@
 	import Badge from './ui/badge/badge.svelte';
 	import * as Tooltip from '$lib/components/ui/tooltip/index.js';
 	import { npubEncode } from 'applesauce-core/helpers';
-	import { Copy, ExternalLink, Link2Off } from 'lucide-svelte';
+	import { Copy, ExternalLink } from 'lucide-svelte';
 	import { copyToClipboard } from '$lib/utils';
 	import Button from './ui/button/button.svelte';
 	let {
