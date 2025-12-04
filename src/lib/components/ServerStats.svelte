@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { RelatrClient, StatsOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { RelatrClient } from '$lib/ctxcn/RelatrClient.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import {
 		Card,
@@ -13,37 +13,21 @@
 	import ProfileCard from './ProfileCard.svelte';
 	import { copyToClipboard } from '$lib/utils';
 	import { pubkeyToHexColor, truncatePubkey } from '$lib/utils.nostr';
+	import { useServerStats } from '$lib/queries/server-stats';
 
 	let { relatr, serverPubkey } = $props<{
 		relatr: RelatrClient;
 		serverPubkey: string;
 	}>();
 
-	let stats = $state<StatsOutput | null>(null);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
-
-	async function fetchStats() {
-		if (!relatr) return;
-
-		loading = true;
-		error = null;
-
-		try {
-			stats = await relatr.Stats({});
-		} catch (err) {
-			console.error('Failed to fetch server stats:', err);
-			error = err instanceof Error ? err.message : 'Failed to fetch server statistics';
-		} finally {
-			loading = false;
-		}
-	}
-
-	$effect(() => {
-		if (relatr) {
-			fetchStats();
-		}
-	});
+	// Use query for server stats with automatic caching
+	const serverStatsQuery = useServerStats(
+		() => relatr,
+		() => serverPubkey
+	);
+	const stats = $derived(serverStatsQuery.data);
+	const loading = $derived(serverStatsQuery.isLoading);
+	const error = $derived(serverStatsQuery.error ? serverStatsQuery.error.message : null);
 
 	function formatNumber(num: number): string {
 		if (num >= 1000000) {

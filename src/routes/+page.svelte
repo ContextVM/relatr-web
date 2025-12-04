@@ -90,10 +90,6 @@
 		switchToServer(newServer);
 	}
 
-	function connectToServerFromHistory(pubkey: string) {
-		switchToServer(pubkey);
-	}
-
 	function removeServerFromHistoryHandler(pubkey: string, event: Event) {
 		event.stopPropagation();
 		removeServerFromHistory(pubkey);
@@ -113,11 +109,11 @@
 				<div class="w-full max-w-2xl space-y-6">
 					<!-- Server Status Card -->
 					<ServerStatusCard
-						relatrClient={relatrClient}
+						{relatrClient}
 						serverPubkey={serverPubkey || DEFAULT_SERVER}
 						bind:serverPubkeyInput
 						bind:validationError
-						serverHistory={serverHistory}
+						{serverHistory}
 						onServerChange={handleServerPubkeyChange}
 						onHistoryRemove={removeServerFromHistoryHandler}
 						onValidate={validateInput}
@@ -142,7 +138,7 @@
 						</TabsContent>
 
 						<TabsContent value="trust" class="mt-6 space-y-8">
-							<TrustScoreCalculator targetPubkey={selectedPubkey} relatr={relatrClient} />
+							<TrustScoreCalculator bind:targetPubkey={selectedPubkey} relatr={relatrClient} />
 						</TabsContent>
 					</Tabs>
 				</div>

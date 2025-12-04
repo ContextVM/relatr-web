@@ -1,16 +1,17 @@
 <script lang="ts">
-	import type { RelatrClient, StatsOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { RelatrClient } from '$lib/ctxcn/RelatrClient.js';
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
-	import { Badge } from '$lib/components/ui/badge/index.js';
 	import ProfileCard from './ProfileCard.svelte';
-	import { Edit, Users, Link as LinkIcon, Clock, Trash2, Check, X } from 'lucide-svelte';
+	import { Edit, Users, Link as LinkIcon, Clock, Trash2, Check, X, Copy } from 'lucide-svelte';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { getPubkeyDisplay, pubkeyToHexColor } from '$lib/utils.nostr';
+	import { copyToClipboard } from '$lib/utils';
 	import type { ServerHistoryItem } from '$lib/utils';
+	import { useServerStats } from '$lib/queries/server-stats';
 
 	let {
 		relatrClient,
@@ -33,33 +34,15 @@
 	} = $props();
 
 	let isEditing = $state(false);
-	let stats = $state<StatsOutput | null>(null);
-	let loading = $state(false);
-	let error = $state<string | null>(null);
 
-	async function fetchStats() {
-		if (!relatrClient) return;
-
-		loading = true;
-		error = null;
-
-		try {
-			stats = await relatrClient.Stats({});
-		} catch (err) {
-			console.error('Failed to fetch server stats:', err);
-			error = err instanceof Error ? err.message : 'Failed to fetch server statistics';
-		} finally {
-			loading = false;
-		}
-	}
-
-	$effect(() => {
-		// Reset stats and refetch whenever the client or server changes
-		if (relatrClient && serverPubkey) {
-			stats = null; // Clear old stats immediately
-			fetchStats();
-		}
-	});
+	// Use query for server stats with automatic caching
+	const serverStatsQuery = useServerStats(
+		() => relatrClient,
+		() => serverPubkey
+	);
+	const stats = $derived(serverStatsQuery.data);
+	const loading = $derived(serverStatsQuery.isLoading);
+	const error = $derived(serverStatsQuery.error ? serverStatsQuery.error.message : null);
 
 	function formatNumber(num: number): string {
 		if (num >= 1000000) {
@@ -127,6 +110,18 @@
 								<ProfileCard pubkey={stats.sourcePubkey} mode="minimal" />
 							</div>
 						{/if}
+						<div class="flex items-center gap-1">
+							<span class="text-xs text-muted-foreground">Server:</span>
+							<span class="font-mono text-xs">{getPubkeyDisplay(serverPubkey)}</span>
+							<Button
+								variant="ghost"
+								size="icon"
+								class="h-5 w-5 p-0 hover:bg-transparent"
+								onclick={() => copyToClipboard(serverPubkey)}
+							>
+								<Copy class="h-3 w-3" />
+							</Button>
+						</div>
 					</div>
 				</div>
 
@@ -195,7 +190,7 @@
 							<span>Recent Servers</span>
 						</div>
 						<div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-							{#each serverHistory as server}
+							{#each serverHistory as server (server.pubkey)}
 								<Card
 									class="group cursor-pointer px-3 py-2 transition-colors hover:bg-accent hover:text-accent-foreground {server.pubkey ===
 									serverPubkey

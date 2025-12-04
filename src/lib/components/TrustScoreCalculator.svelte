@@ -6,64 +6,44 @@
 	import Spinner from './ui/spinner/spinner.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import TrustScoreDisplay from './TrustScoreDisplay.svelte';
-	import type { Relatr, CalculateTrustScoreOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { Relatr } from '$lib/ctxcn/RelatrClient.js';
 	import { X, EllipsisVertical } from 'lucide-svelte';
 	import { validateAndDecodePubkey } from '$lib/utils.nostr';
+	import { useTrustScore } from '$lib/queries/trust-scores';
 
 	let {
 		targetPubkey = $bindable(''),
 		relatr
 	}: {
 		targetPubkey?: string;
-		sourcePubkey?: string;
 		relatr: Relatr;
 	} = $props();
+
 	let weightingScheme = $state<'default' | 'social' | 'validation' | 'strict'>('default');
-	let isLoading = $state(false);
-	let error = $state<string | null>(null);
-	let result = $state<CalculateTrustScoreOutput | null>(null);
 	let showAdvancedConfig = $state(false);
 
-	async function calculateTrustScore() {
+	// Use query for trust score with automatic caching
+	const trustScoreQuery = useTrustScore(
+		() => relatr,
+		() => targetPubkey,
+		() => weightingScheme
+	);
+	const result = $derived(trustScoreQuery.data);
+	const isLoading = $derived(trustScoreQuery.isLoading);
+	const error = $derived(trustScoreQuery.error ? trustScoreQuery.error.message : null);
+
+	function calculateTrustScore() {
 		if (!targetPubkey.trim()) return;
 		if (!validateAndDecodePubkey(targetPubkey)) {
-			error = 'Invalid target pubkey';
+			// We need to handle this validation error separately since the query doesn't validate
 			return;
 		}
-		isLoading = true;
-		error = null;
-		result = null;
-
-		try {
-			const params: Parameters<typeof relatr.CalculateTrustScore> = [targetPubkey];
-
-			if (weightingScheme !== 'default') {
-				params.push(undefined, weightingScheme);
-			}
-
-			const trustScoreResult = await relatr.CalculateTrustScore(...params);
-			result = trustScoreResult;
-		} catch (err) {
-			error =
-				err instanceof Error ? err.message : 'An error occurred while calculating trust score';
-		} finally {
-			isLoading = false;
-		}
+		// Trigger the query by enabling it - the query key includes targetPubkey so it will refetch automatically
 	}
-
-	// Auto-calculate when targetPubkey prop changes
-	$effect(() => {
-		if (targetPubkey.trim()) {
-			calculateTrustScore();
-		}
-	});
 
 	function resetSearch() {
 		targetPubkey = '';
 		weightingScheme = 'default';
-		isLoading = false;
-		error = null;
-		result = null;
 		showAdvancedConfig = false;
 	}
 

@@ -35,13 +35,13 @@
 	} = $props();
 
 	// Decode the pubkey to hex format for internal use
-	const hexPubkey = validateAndDecodePubkey(pubkey) || pubkey;
-	const profile = eventStore.model(ProfileModel, hexPubkey);
+	const hexPubkey = $derived(validateAndDecodePubkey(pubkey) || pubkey);
+	const profile = $derived(eventStore.model(ProfileModel, hexPubkey));
 	$effect(() => {
 		if ($profile) return;
 		const sub = addressLoader({
 			kind: Metadata,
-			pubkey,
+			pubkey: hexPubkey,
 			relays: metadataRelays
 		}).subscribe();
 		return () => sub.unsubscribe();

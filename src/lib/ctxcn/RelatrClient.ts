@@ -98,7 +98,8 @@ export type Relatr = {
 
 export class RelatrClient implements Relatr {
 	static readonly SERVER_PUBKEY =
-		'60a6070044e5788bf8a9d4d4e5aaa98a3853eec38c3ecc483ced19800fb6b7b0';
+		'750682303c9f0ddad75941b49edc9d46e3ed306b9ee3335338a21a3e404c5fa3';
+	static readonly DEFAULT_RELAYS = ['wss://relay.contextvm.org'];
 	private client: Client;
 	private transport: Transport;
 
@@ -110,10 +111,13 @@ export class RelatrClient implements Relatr {
 			version: '1.0.0'
 		});
 
+		// Private key precedence: constructor options > config file
+		const resolvedPrivateKey = options.privateKey || '';
+
 		const {
-			privateKey,
-			relays = ['wss://relay.contextvm.org'],
-			signer = new PrivateKeySigner(privateKey || ''),
+			privateKey: _,
+			relays = RelatrClient.DEFAULT_RELAYS,
+			signer = new PrivateKeySigner(resolvedPrivateKey),
 			relayHandler = new ApplesauceRelayPool(relays),
 			serverPubkey,
 			...rest

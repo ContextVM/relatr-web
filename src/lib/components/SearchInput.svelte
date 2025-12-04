@@ -7,6 +7,8 @@
 	import { EllipsisVertical } from 'lucide-svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
+	import { useSearchProfiles } from '$lib/queries/search';
+
 	let {
 		results = $bindable<SearchProfilesOutput | null>(null),
 		relatr
@@ -18,12 +20,28 @@
 	let query = $state('');
 	let limit = $state(5);
 	let extendToNostr = $state(false);
-	let sourcePubkey = $state('');
 	let weightingScheme = $state<'default' | 'social' | 'validation' | 'strict'>('default');
-	let isLoading = $state(false);
-	let error = $state<string | null>(null);
 	let showAdvancedConfig = $state(false);
 	let searchInputElement = $state<HTMLInputElement | null>(null);
+
+	// Use query for search with caching - only trigger on explicit search
+	let searchTrigger = $state<string>('');
+
+	const searchQuery = useSearchProfiles(
+		() => relatr,
+		() => searchTrigger,
+		() => limit,
+		() => weightingScheme,
+		() => extendToNostr
+	);
+	const isLoading = $derived(searchQuery.isLoading);
+	const error = $derived(searchQuery.error ? searchQuery.error.message : null);
+
+	$effect(() => {
+		if (searchQuery.data) {
+			results = searchQuery.data;
+		}
+	});
 
 	$effect(() => {
 		if (searchInputElement) {
@@ -34,37 +52,10 @@
 	$effect(() => {
 		console.log($state.snapshot(extendToNostr));
 	});
-	async function handleSearch() {
+
+	function handleSearch() {
 		if (!query.trim()) return;
-
-		isLoading = true;
-		error = null;
-
-		try {
-			const searchParams: Parameters<typeof relatr.SearchProfiles> = [
-				query,
-				limit,
-				weightingScheme,
-				extendToNostr
-			];
-
-			if (sourcePubkey.trim()) {
-				searchParams.push(sourcePubkey);
-				if (weightingScheme !== 'default') {
-					searchParams.push(weightingScheme);
-				}
-			} else if (weightingScheme !== 'default') {
-				searchParams.push(undefined, weightingScheme);
-			}
-
-			const searchResults = await relatr.SearchProfiles(...searchParams);
-			results = searchResults;
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'An error occurred while searching';
-			results = null;
-		} finally {
-			isLoading = false;
-		}
+		searchTrigger = query.trim();
 	}
 
 	function toggleAdvancedConfig() {
