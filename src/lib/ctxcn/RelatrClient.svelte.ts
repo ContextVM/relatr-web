@@ -6,13 +6,10 @@ import {
 	PrivateKeySigner,
 	ApplesauceRelayPool
 } from '@contextvm/sdk';
+import { activeAccount } from '$lib/services/accountManager.svelte';
 
 export interface CalculateTrustScoreInput {
 	targetPubkey: string;
-	/**
-	 * Weighting scheme: 'default' (balanced), 'conservative' (higher profile validation), 'progressive' (higher social distance), 'balanced'
-	 */
-	weightingScheme?: 'default' | 'social' | 'validation' | 'strict';
 }
 
 export interface CalculateTrustScoreOutput {
@@ -30,6 +27,31 @@ export interface CalculateTrustScoreOutput {
 		};
 		computedAt: number;
 	};
+	computationTimeMs: number;
+}
+
+export interface CalculateTrustScoresInput {
+	/**
+	 * @minItems 1
+	 */
+	targetPubkeys: [string, ...string[]];
+}
+
+export interface CalculateTrustScoresOutput {
+	trustScores: {
+		sourcePubkey: string;
+		targetPubkey: string;
+		score: number;
+		components: {
+			distanceWeight: number;
+			validators: {
+				[k: string]: number;
+			};
+			socialDistance: number;
+			normalizedDistance: number;
+		};
+		computedAt: number;
+	}[];
 	computationTimeMs: number;
 }
 
@@ -62,10 +84,6 @@ export interface SearchProfilesInput {
 	 */
 	limit?: number;
 	/**
-	 * Weighting scheme: 'default' (balanced), 'social' (higher social distance), 'validation' (higher profile validation), 'strict' (highest requirements)
-	 */
-	weightingScheme?: 'default' | 'social' | 'validation' | 'strict';
-	/**
 	 * Whether to extend the search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
 	 */
 	extendToNostr?: boolean;
@@ -82,24 +100,43 @@ export interface SearchProfilesOutput {
 	searchTimeMs: number;
 }
 
+export interface ManageTaProviderInput {
+	/**
+	 * Action to perform: 'get' to check status, 'subscribe' to activate, 'unsubscribe' to deactivate
+	 */
+	action: 'get' | 'subscribe' | 'unsubscribe';
+}
+
+export interface ManageTaProviderOutput {
+	success: boolean;
+	message: string;
+	subscriberPubkey: string;
+	isActive: boolean;
+	createdAt: number | null;
+	updatedAt: number | null;
+	rank?: {
+		published: boolean;
+		rank: number;
+		previousRank: number | null;
+	};
+}
+
 export type Relatr = {
-	CalculateTrustScore: (
-		targetPubkey: string,
-		weightingScheme?: string
-	) => Promise<CalculateTrustScoreOutput>;
+	CalculateTrustScore: (targetPubkey: string) => Promise<CalculateTrustScoreOutput>;
+	CalculateTrustScores: (targetPubkeys: string[]) => Promise<CalculateTrustScoresOutput>;
 	Stats: (args: StatsInput) => Promise<StatsOutput>;
 	SearchProfiles: (
 		query: string,
 		limit?: number,
-		weightingScheme?: string,
 		extendToNostr?: boolean
 	) => Promise<SearchProfilesOutput>;
+	ManageTaProvider: (action: string) => Promise<ManageTaProviderOutput>;
 };
 
 export class RelatrClient implements Relatr {
 	static readonly SERVER_PUBKEY =
-		'750682303c9f0ddad75941b49edc9d46e3ed306b9ee3335338a21a3e404c5fa3';
-	static readonly DEFAULT_RELAYS = ['wss://relay.contextvm.org'];
+		'60a6070044e5788bf8a9d4d4e5aaa98a3853eec38c3ecc483ced19800fb6b7b0';
+	static readonly DEFAULT_RELAYS = ['ws://localhost:10547'];
 	private client: Client;
 	private transport: Transport;
 
@@ -113,11 +150,10 @@ export class RelatrClient implements Relatr {
 
 		// Private key precedence: constructor options > config file
 		const resolvedPrivateKey = options.privateKey || '';
-
 		const {
 			privateKey: _,
 			relays = RelatrClient.DEFAULT_RELAYS,
-			signer = new PrivateKeySigner(resolvedPrivateKey),
+			signer = options.signer || new PrivateKeySigner(resolvedPrivateKey),
 			relayHandler = new ApplesauceRelayPool(relays),
 			serverPubkey,
 			...rest
@@ -152,14 +188,19 @@ export class RelatrClient implements Relatr {
 	/**
 	 * Compute trust score for a Nostr pubkey using social graph analysis and profile validation. Only target pubkey is required - all other parameters are optional.
 	 * @param {string} targetPubkey The target pubkey parameter
-	 * @param {string} weightingScheme [optional] Weighting scheme: 'default' (balanced), 'conservative' (higher profile validation), 'progressive' (higher social distance), 'balanced'
 	 * @returns {Promise<CalculateTrustScoreOutput>} The result of the calculate_trust_score operation
 	 */
-	async CalculateTrustScore(
-		targetPubkey: string,
-		weightingScheme?: string
-	): Promise<CalculateTrustScoreOutput> {
-		return this.call('calculate_trust_score', { targetPubkey, weightingScheme });
+	async CalculateTrustScore(targetPubkey: string): Promise<CalculateTrustScoreOutput> {
+		return this.call('calculate_trust_score', { targetPubkey });
+	}
+
+	/**
+	 * Compute trust scores for a list of Nostr pubkeys in one batch using social graph analysis and profile validation.
+	 * @param {string[]} targetPubkeys The target pubkeys parameter
+	 * @returns {Promise<CalculateTrustScoresOutput>} The result of the calculate_trust_scores operation
+	 */
+	async CalculateTrustScores(targetPubkeys: string[]): Promise<CalculateTrustScoresOutput> {
+		return this.call('calculate_trust_scores', { targetPubkeys });
 	}
 
 	/**
@@ -174,16 +215,34 @@ export class RelatrClient implements Relatr {
 	 * Search for Nostr profiles by name/query and return results sorted by trust score. Queries metadata relays and calculates trust scores for each result.
 	 * @param {string} query The query parameter
 	 * @param {number} limit [optional] Maximum number of results to return (default: 20)
-	 * @param {string} weightingScheme [optional] Weighting scheme: 'default' (balanced), 'social' (higher social distance), 'validation' (higher profile validation), 'strict' (highest requirements)
 	 * @param {boolean} extendToNostr [optional] Whether to extend the search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
 	 * @returns {Promise<SearchProfilesOutput>} The result of the search_profiles operation
 	 */
 	async SearchProfiles(
 		query: string,
 		limit?: number,
-		weightingScheme?: string,
 		extendToNostr?: boolean
 	): Promise<SearchProfilesOutput> {
-		return this.call('search_profiles', { query, limit, weightingScheme, extendToNostr });
+		return this.call('search_profiles', { query, limit, extendToNostr });
+	}
+
+	/**
+	 * Manage your Trusted Assertions provider subscription. Check status, subscribe, or unsubscribe from TA services.
+	 * @param {string} action Action to perform: 'get' to check status, 'subscribe' to activate, 'unsubscribe' to deactivate
+	 * @returns {Promise<ManageTaProviderOutput>} The result of the manage_ta_provider operation
+	 */
+	async ManageTaProvider(action: string): Promise<ManageTaProviderOutput> {
+		return this.call('manage_ta_provider', { action });
 	}
 }
+
+/**
+ * Default singleton instance of RelatrClient.
+ * This instance uses the default configuration and can be used directly
+ * without creating a new instance.
+ *
+ * @example
+ * import { relatr } from './RelatrClient';
+ * const result = await relatr.SomeMethod();
+ */
+export const relatr = new RelatrClient();

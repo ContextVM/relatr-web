@@ -1,5 +1,5 @@
 import { createQuery } from '@tanstack/svelte-query';
-import type { RelatrClient, StatsOutput } from '$lib/ctxcn/RelatrClient.js';
+import type { RelatrClient, StatsOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 import { serverKeys } from '$lib/query-keys';
 
 export function useServerStats(

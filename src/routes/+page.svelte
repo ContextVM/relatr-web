@@ -4,7 +4,7 @@
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
-	import { RelatrClient, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+	import { RelatrClient, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { DEFAULT_SERVER } from '$lib/constants';
 	import {
@@ -14,6 +14,7 @@
 		type ServerHistoryItem
 	} from '$lib/utils';
 	import { page } from '$app/state';
+	import { activeAccount } from '$lib/services/accountManager.svelte';
 
 	let searchResults = $state<SearchProfilesOutput | null>(null);
 	let activeTab = $state<'search' | 'trust'>('search');
@@ -57,6 +58,15 @@
 			if (queryServerPubkey !== serverPubkey) {
 				switchToServer(queryServerPubkey);
 			}
+		}
+	});
+
+	// React to account changes
+	$effect(() => {
+		if ($activeAccount) {
+			relatrClient = new RelatrClient({ serverPubkey, signer: $activeAccount.signer });
+		} else {
+			relatrClient = new RelatrClient({ serverPubkey });
 		}
 	});
 

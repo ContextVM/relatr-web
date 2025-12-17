@@ -2,7 +2,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import type { Relatr, SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { Relatr, SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import Spinner from './ui/spinner/spinner.svelte';
 	import { EllipsisVertical } from 'lucide-svelte';
 	import * as Select from '$lib/components/ui/select/index.js';
@@ -20,7 +20,6 @@
 	let query = $state('');
 	let limit = $state(5);
 	let extendToNostr = $state(false);
-	let weightingScheme = $state<'default' | 'social' | 'validation' | 'strict'>('default');
 	let showAdvancedConfig = $state(false);
 	let searchInputElement = $state<HTMLInputElement | null>(null);
 
@@ -31,7 +30,6 @@
 		() => relatr,
 		() => searchTrigger,
 		() => limit,
-		() => weightingScheme,
 		() => extendToNostr
 	);
 	const isLoading = $derived(searchQuery.isLoading);
@@ -116,21 +114,6 @@
 							max="100"
 							placeholder="10"
 						/>
-					</div>
-					<div class="space-y-2">
-						<Label for="weighting-scheme">Weighting Scheme</Label>
-
-						<Select.Root type="single" bind:value={weightingScheme}>
-							<Select.Trigger class="w-full" placeholder="Select weighting scheme">
-								{weightingScheme}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Item value="default">Default</Select.Item>
-								<Select.Item value="social">Social</Select.Item>
-								<Select.Item value="validation">Validation</Select.Item>
-								<Select.Item value="strict">Strict</Select.Item>
-							</Select.Content>
-						</Select.Root>
 					</div>
 					<div class="space-y-2">
 						<Label for="extend-to-nostr">Extend to Nostr</Label>

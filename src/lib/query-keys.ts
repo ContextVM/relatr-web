@@ -6,12 +6,11 @@ export const serverKeys = {
 
 export const trustScoreKeys = {
 	all: ['trust-scores'] as const,
-	detail: (targetPubkey: string, weightingScheme?: string) =>
-		[...trustScoreKeys.all, targetPubkey, weightingScheme || 'default'] as const
+	detail: (targetPubkey: string) => [...trustScoreKeys.all, targetPubkey] as const
 } as const;
 
 export const searchKeys = {
 	all: ['search'] as const,
-	profiles: (query: string, limit?: number, weightingScheme?: string, extendToNostr?: boolean) =>
-		[...searchKeys.all, 'profiles', query, limit, weightingScheme, extendToNostr] as const
+	profiles: (query: string, limit?: number, extendToNostr?: boolean) =>
+		[...searchKeys.all, 'profiles', query, limit, extendToNostr] as const
 } as const;

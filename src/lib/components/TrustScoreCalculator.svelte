@@ -6,7 +6,7 @@
 	import Spinner from './ui/spinner/spinner.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import TrustScoreDisplay from './TrustScoreDisplay.svelte';
-	import type { Relatr } from '$lib/ctxcn/RelatrClient.js';
+	import type { Relatr } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import { X, EllipsisVertical } from 'lucide-svelte';
 	import { validateAndDecodePubkey } from '$lib/utils.nostr';
 	import { useTrustScore } from '$lib/queries/trust-scores';
@@ -19,14 +19,10 @@
 		relatr: Relatr;
 	} = $props();
 
-	let weightingScheme = $state<'default' | 'social' | 'validation' | 'strict'>('default');
-	let showAdvancedConfig = $state(false);
-
 	// Use query for trust score with automatic caching
 	const trustScoreQuery = useTrustScore(
 		() => relatr,
-		() => targetPubkey,
-		() => weightingScheme
+		() => targetPubkey
 	);
 	const result = $derived(trustScoreQuery.data);
 	const isLoading = $derived(trustScoreQuery.isLoading);
@@ -43,12 +39,6 @@
 
 	function resetSearch() {
 		targetPubkey = '';
-		weightingScheme = 'default';
-		showAdvancedConfig = false;
-	}
-
-	function toggleAdvancedConfig() {
-		showAdvancedConfig = !showAdvancedConfig;
 	}
 </script>
 
@@ -74,29 +64,6 @@
 					}
 				}}
 			/>
-			<Button onclick={toggleAdvancedConfig} variant="ghost" size="sm" class="h-8 w-8 p-0">
-				<EllipsisVertical class="h-4 w-4" />
-			</Button>
-		</div>
-
-		<div class="space-y-2">
-			{#if showAdvancedConfig}
-				<div class="grid grid-cols-1 gap-4 rounded-md border bg-muted/50 p-4 pt-2 md:grid-cols-2">
-					<div class="space-y-2">
-						<Label for="weighting-scheme">Weighting Scheme</Label>
-						<select
-							id="weighting-scheme"
-							bind:value={weightingScheme}
-							class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-						>
-							<option value="default">Default</option>
-							<option value="social">Social</option>
-							<option value="validation">Validation</option>
-							<option value="strict">Strict</option>
-						</select>
-					</div>
-				</div>
-			{/if}
 		</div>
 
 		<Button

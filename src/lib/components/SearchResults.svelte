@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Card } from '$lib/components/ui/card/index.js';
-	import type { SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+	import type { SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import ProfileCard from './ProfileCard.svelte';
 
 	export let results: SearchProfilesOutput | null = null;

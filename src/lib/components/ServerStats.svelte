@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { RelatrClient } from '$lib/ctxcn/RelatrClient.js';
+	import type { RelatrClient } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import {
 		Card,
