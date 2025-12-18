@@ -103,8 +103,8 @@
 	<div class="flex min-h-screen flex-col bg-background">
 		<main class="container mx-auto max-w-4xl flex-1 px-6 py-8">
 			<div class="flex flex-col items-center justify-center">
-				<div class="w-full max-w-2xl space-y-6">
-					<Card>
+				<div class="w-full max-w-2xl">
+					<Card class="py-6">
 						<CardHeader>
 							<CardTitle>Trusted Assertions Provider</CardTitle>
 							<CardDescription>
@@ -294,7 +294,7 @@
 		<main class="container mx-auto max-w-4xl flex-1 px-6 py-8">
 			<div class="flex flex-col items-center justify-center">
 				<div class="w-full max-w-2xl space-y-6">
-					<Card>
+					<Card class="py-6">
 						<CardHeader>
 							<CardTitle>Trusted Assertions Provider</CardTitle>
 							<CardDescription>

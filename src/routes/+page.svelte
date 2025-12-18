@@ -6,9 +6,7 @@
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
 	import { type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import { isHexKey } from 'applesauce-core/helpers';
-	import { DEFAULT_SERVER } from '$lib/constants';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
-	import { page } from '$app/state';
 	import {
 		getRelatrClient,
 		getServerPubkey,
@@ -19,53 +17,35 @@
 	let activeTab = $state<'search' | 'trust'>('search');
 	let selectedPubkey = $state('');
 	let serverPubkeyInput = $state('');
-	let serverPubkey = $derived(getServerPubkey());
 	let relatrClient = $derived(getRelatrClient());
+	let serverPubkey = $derived(getServerPubkey());
 	let validationError = $state<string | null>(null);
 	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
+
+	// Keep the input seeded from the shared store (store also handles initial `?s=` and history)
+	$effect(() => {
+		if (!serverPubkeyInput) serverPubkeyInput = serverPubkey;
+	});
 
 	function handleProfileClick(pubkey: string) {
 		selectedPubkey = pubkey;
 		activeTab = 'trust';
 	}
 
-	// URL is used only for *initial* server configuration (shareable links).
-	// After a user manually selects a server, we ignore `?s=` for the remainder of the session.
-	let queryServerPubkey = $derived(page.url.searchParams.get('s'));
-	let hasAppliedInitialUrlServer = $state(false);
-	let hasManualServerOverride = $state(false);
-
-	$effect(() => {
-		// Apply URL server only once, and only if the user hasn't manually overridden.
-		if (hasAppliedInitialUrlServer || hasManualServerOverride) return;
-
-		if (queryServerPubkey && isHexKey(queryServerPubkey)) {
-			serverPubkeyInput = queryServerPubkey;
-			setServerPubkey(queryServerPubkey);
-			serverHistory = getServerHistory();
-		}
-
-		hasAppliedInitialUrlServer = true;
-	});
-
 	function handleServerPubkeyChange() {
-		const trimmedPubkey = serverPubkeyInput.trim();
+		const trimmed = serverPubkeyInput.trim();
 
-		if (trimmedPubkey && !isHexKey(trimmedPubkey)) {
+		if (trimmed && !isHexKey(trimmed)) {
 			validationError = 'Invalid hex public key format';
 			return;
 		}
 
 		validationError = null;
 
-		// Any action via the card (manual entry or clicking history) counts as manual override
-		hasManualServerOverride = true;
+		// Empty means "default server" (handled by the store)
+		setServerPubkey(trimmed);
 
-		// Use the new server or default if empty
-		const newServer = trimmedPubkey || DEFAULT_SERVER;
-
-		// Switch the shared server/client (+ history)
-		setServerPubkey(newServer);
+		// Reflect current history
 		serverHistory = getServerHistory();
 	}
 
