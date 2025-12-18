@@ -235,14 +235,3 @@ export class RelatrClient implements Relatr {
 		return this.call('manage_ta_provider', { action });
 	}
 }
-
-/**
- * Default singleton instance of RelatrClient.
- * This instance uses the default configuration and can be used directly
- * without creating a new instance.
- *
- * @example
- * import { relatr } from './RelatrClient';
- * const result = await relatr.SomeMethod();
- */
-export const relatr = new RelatrClient();

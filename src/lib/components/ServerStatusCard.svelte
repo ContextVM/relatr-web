@@ -12,10 +12,9 @@
 	import { copyToClipboard } from '$lib/utils';
 	import type { ServerHistoryItem } from '$lib/utils';
 	import { useServerStats } from '$lib/queries/server-stats';
+	import { getRelatrClient, getServerPubkey } from '$lib/stores/server-config.svelte';
 
 	let {
-		relatrClient,
-		serverPubkey,
 		serverPubkeyInput = $bindable(),
 		validationError = $bindable(),
 		serverHistory,
@@ -23,8 +22,6 @@
 		onHistoryRemove,
 		onValidate
 	}: {
-		relatrClient: RelatrClient;
-		serverPubkey: string;
 		serverPubkeyInput: string;
 		validationError: string | null;
 		serverHistory: ServerHistoryItem[];
@@ -34,7 +31,8 @@
 	} = $props();
 
 	let isEditing = $state(false);
-
+	let relatrClient = $derived(getRelatrClient());
+	let serverPubkey = $derived(getServerPubkey());
 	// Use query for server stats with automatic caching
 	const serverStatsQuery = useServerStats(
 		() => relatrClient,

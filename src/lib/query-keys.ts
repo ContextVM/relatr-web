@@ -14,3 +14,9 @@ export const searchKeys = {
 	profiles: (query: string, limit?: number, extendToNostr?: boolean) =>
 		[...searchKeys.all, 'profiles', query, limit, extendToNostr] as const
 } as const;
+
+export const taProviderKeys = {
+	all: ['ta-provider'] as const,
+	status: (serverPubkey: string, subscriberPubkey: string | null) =>
+		[...taProviderKeys.all, 'status', serverPubkey, subscriberPubkey] as const
+} as const;

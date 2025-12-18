@@ -192,9 +192,7 @@
 
 			<!-- Computation Info -->
 			<div class="text-center text-xs text-muted-foreground">
-				Computed in {result.computationTimeMs}ms at {new Date(
-					result.trustScore.computedAt * 1000
-				).toLocaleString()}
+				Computed in {result.computationTimeMs}ms
 			</div>
 		</div>
 	{/if}

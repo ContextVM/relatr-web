@@ -4,24 +4,23 @@
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
-	import { RelatrClient, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
+	import { type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { DEFAULT_SERVER } from '$lib/constants';
-	import {
-		getServerHistory,
-		addServerToHistory,
-		removeServerFromHistory,
-		type ServerHistoryItem
-	} from '$lib/utils';
+	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
 	import { page } from '$app/state';
-	import { activeAccount } from '$lib/services/accountManager.svelte';
+	import {
+		getRelatrClient,
+		getServerPubkey,
+		setServerPubkey
+	} from '$lib/stores/server-config.svelte';
 
 	let searchResults = $state<SearchProfilesOutput | null>(null);
 	let activeTab = $state<'search' | 'trust'>('search');
 	let selectedPubkey = $state('');
 	let serverPubkeyInput = $state('');
-	let serverPubkey = $state('');
-	let relatrClient = $state<RelatrClient | null>(null);
+	let serverPubkey = $derived(getServerPubkey());
+	let relatrClient = $derived(getRelatrClient());
 	let validationError = $state<string | null>(null);
 	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
 
@@ -30,60 +29,24 @@
 		activeTab = 'trust';
 	}
 
-	// Reactive query parameter for server configuration
-	let queryServerPubkey = $state(page.url.searchParams.get('s'));
+	// URL is used only for *initial* server configuration (shareable links).
+	// After a user manually selects a server, we ignore `?s=` for the remainder of the session.
+	let queryServerPubkey = $derived(page.url.searchParams.get('s'));
+	let hasAppliedInitialUrlServer = $state(false);
+	let hasManualServerOverride = $state(false);
 
 	$effect(() => {
-		// Initialize client if not already done
-		if (!relatrClient) {
-			let initialServerPubkey = DEFAULT_SERVER;
+		// Apply URL server only once, and only if the user hasn't manually overridden.
+		if (hasAppliedInitialUrlServer || hasManualServerOverride) return;
 
-			// Use query parameter if valid, otherwise use default
-			if (queryServerPubkey && isHexKey(queryServerPubkey)) {
-				initialServerPubkey = queryServerPubkey;
-				serverPubkeyInput = queryServerPubkey;
-				serverPubkey = queryServerPubkey;
-			}
-
-			relatrClient = new RelatrClient({ serverPubkey: initialServerPubkey });
-			addServerToHistory(initialServerPubkey);
+		if (queryServerPubkey && isHexKey(queryServerPubkey)) {
+			serverPubkeyInput = queryServerPubkey;
+			setServerPubkey(queryServerPubkey);
 			serverHistory = getServerHistory();
 		}
+
+		hasAppliedInitialUrlServer = true;
 	});
-
-	// React to changes in query parameter
-	$effect(() => {
-		if (queryServerPubkey && isHexKey(queryServerPubkey) && relatrClient) {
-			// Only switch if the query param is different from current server
-			if (queryServerPubkey !== serverPubkey) {
-				switchToServer(queryServerPubkey);
-			}
-		}
-	});
-
-	// React to account changes
-	$effect(() => {
-		if ($activeAccount) {
-			relatrClient = new RelatrClient({ serverPubkey, signer: $activeAccount.signer });
-		} else {
-			relatrClient = new RelatrClient({ serverPubkey });
-		}
-	});
-
-	/**
-	 * Switch to a new server and update history appropriately
-	 */
-	function switchToServer(newServerPubkey: string) {
-		// Update UI state
-		serverPubkeyInput = newServerPubkey;
-		serverPubkey = newServerPubkey;
-		relatrClient = new RelatrClient({ serverPubkey: newServerPubkey });
-
-		addServerToHistory(newServerPubkey);
-
-		// Refresh history display
-		serverHistory = getServerHistory();
-	}
 
 	function handleServerPubkeyChange() {
 		const trimmedPubkey = serverPubkeyInput.trim();
@@ -95,9 +58,15 @@
 
 		validationError = null;
 
+		// Any action via the card (manual entry or clicking history) counts as manual override
+		hasManualServerOverride = true;
+
 		// Use the new server or default if empty
 		const newServer = trimmedPubkey || DEFAULT_SERVER;
-		switchToServer(newServer);
+
+		// Switch the shared server/client (+ history)
+		setServerPubkey(newServer);
+		serverHistory = getServerHistory();
 	}
 
 	function removeServerFromHistoryHandler(pubkey: string, event: Event) {
@@ -119,8 +88,6 @@
 				<div class="w-full max-w-2xl space-y-6">
 					<!-- Server Status Card -->
 					<ServerStatusCard
-						{relatrClient}
-						serverPubkey={serverPubkey || DEFAULT_SERVER}
 						bind:serverPubkeyInput
 						bind:validationError
 						{serverHistory}
