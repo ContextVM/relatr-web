@@ -3,6 +3,8 @@
 	import { queryClient } from '$lib/query-client';
 	import { taProviderKeys } from '$lib/query-keys';
 	import { useTaProviderStatus } from '$lib/queries/ta-provider';
+	import { useUserRelays, useUserTaProviders } from '$lib/queries/nostr';
+	import { usePublishTaProvider } from '$lib/mutations/nostr';
 	import { activeAccount } from '$lib/services/accountManager.svelte';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import {
@@ -25,7 +27,10 @@
 		Minus,
 		Calendar,
 		RefreshCw,
-		User
+		User,
+		Plus,
+		Server,
+		List
 	} from 'lucide-svelte';
 	import { getPubkeyDisplay } from '$lib/utils.nostr';
 	import { formatTimestamp } from '$lib/utils';
@@ -40,6 +45,16 @@
 		() => serverPubkey,
 		() => $activeAccount?.pubkey ?? null
 	);
+
+	// Queries for user relays and TA providers
+	const userRelaysQuery = useUserRelays(() => $activeAccount?.pubkey ?? null);
+	const userTaProvidersQuery = useUserTaProviders(
+		() => $activeAccount?.pubkey ?? null,
+		() => userRelaysQuery.data ?? null
+	);
+
+	// Mutation for publishing TA provider
+	const publishTaProviderMutation = usePublishTaProvider();
 
 	function getStatusKey() {
 		return taProviderKeys.status(serverPubkey, $activeAccount?.pubkey ?? null);
@@ -91,11 +106,43 @@
 		subscriptionQuery.isLoading ||
 			subscriptionQuery.isRefetching ||
 			subscribeMutation.isPending ||
-			unsubscribeMutation.isPending
+			unsubscribeMutation.isPending ||
+			userRelaysQuery.isLoading ||
+			userTaProvidersQuery.isLoading ||
+			publishTaProviderMutation.isPending
+	);
+
+	// Derived state for TA provider management
+	let isRelatrInTaProviders = $derived(
+		(userTaProvidersQuery.data?.tags ?? []).some(
+			(tag) => tag[0] === '30382:rank' && tag[1] === serverPubkey
+		)
 	);
 
 	function refreshStatus() {
 		subscriptionQuery.refetch();
+	}
+
+	function addRelatrToTaProviders() {
+		if (!$activeAccount?.pubkey || !userRelaysQuery.data) return;
+
+		publishTaProviderMutation.mutate(
+			{
+				userPubkey: $activeAccount.pubkey,
+				userRelays: userRelaysQuery.data,
+				existingEvent: userTaProvidersQuery.data || null
+			},
+			{
+				onSuccess: (result) => {
+					toast.success(
+						`Successfully added Relatr to your Trusted Assertions providers (published to ${result.publishedTo.length} relay(s))`
+					);
+				},
+				onError: (error) => {
+					toast.error(error instanceof Error ? error.message : 'Failed to add Relatr to providers');
+				}
+			}
+		);
 	}
 </script>
 
@@ -281,6 +328,124 @@
 											Refresh
 										</Button>
 									</div>
+
+									<!-- TA Providers Section (only shown when subscribed) -->
+									{#if subscriptionQuery.data.isActive}
+										<div class="mt-8 border-t pt-6">
+											<div class="mb-4 flex items-center gap-2">
+												<Server class="h-5 w-5 text-muted-foreground" />
+												<h3 class="text-lg font-semibold">Trusted Assertions Providers</h3>
+											</div>
+
+											{#if userRelaysQuery.isLoading || userTaProvidersQuery.isLoading}
+												<div class="flex flex-col items-center justify-center gap-3 py-6">
+													<Spinner class="h-6 w-6" />
+													<p class="text-sm text-muted-foreground">Loading your TA providers...</p>
+												</div>
+											{:else if userTaProvidersQuery.isError}
+												<div class="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+													<div class="flex items-start gap-3">
+														<XCircle class="mt-0.5 h-5 w-5 text-destructive" />
+														<div class="flex-1">
+															<p class="text-sm font-medium text-destructive">
+																Failed to load TA providers
+															</p>
+															<p class="mt-1 text-xs text-muted-foreground">
+																{userTaProvidersQuery.error instanceof Error
+																	? userTaProvidersQuery.error.message
+																	: 'An unknown error occurred'}
+															</p>
+														</div>
+													</div>
+												</div>
+											{:else if userTaProvidersQuery.data}
+												<div class="space-y-4">
+													<div class="rounded-lg border p-4">
+														<div class="mb-3 flex items-center gap-2">
+															<List class="h-4 w-4 text-muted-foreground" />
+															<p class="text-sm font-medium">Current Providers</p>
+														</div>
+														<div class="space-y-2">
+															{#each userTaProvidersQuery.data.tags.filter( (tag) => tag[0].startsWith('30382:') ) as tag}
+																<div
+																	class="flex items-center justify-between rounded-md bg-muted/30 p-3"
+																>
+																	<div class="flex items-center gap-2">
+																		<Badge variant="outline" class="font-mono text-xs">
+																			{tag[0]}
+																		</Badge>
+																		<span class="font-mono text-sm text-muted-foreground">
+																			{getPubkeyDisplay(tag[1])}
+																		</span>
+																	</div>
+																	{#if tag[1] === serverPubkey}
+																		<Badge variant="default" class="text-xs">Current</Badge>
+																	{/if}
+																</div>
+															{/each}
+														</div>
+													</div>
+
+													{#if !isRelatrInTaProviders}
+														<div class="flex flex-col gap-3">
+															<p class="text-sm text-muted-foreground">
+																Add this Relatr server to your Trusted Assertions providers list.
+															</p>
+															<Button
+																onclick={addRelatrToTaProviders}
+																disabled={isLoading}
+																variant="outline"
+																class="w-full"
+															>
+																{#if publishTaProviderMutation.isPending}
+																	<Spinner class="mr-2 h-4 w-4" />
+																{:else}
+																	<Plus class="mr-2 h-4 w-4" />
+																{/if}
+																Add Relatr to Providers
+															</Button>
+														</div>
+													{:else}
+														<div class="rounded-lg border border-green-600/30 bg-green-600/10 p-4">
+															<div class="flex items-center gap-3">
+																<CheckCircle class="h-5 w-5 text-green-600" />
+																<div>
+																	<p class="text-sm font-medium text-green-600">
+																		Relatr is in your providers list
+																	</p>
+																	<p class="text-xs text-muted-foreground">
+																		This server is already configured as a Trusted Assertions
+																		provider.
+																	</p>
+																</div>
+															</div>
+														</div>
+													{/if}
+												</div>
+											{:else}
+												<div class="space-y-4">
+													<div class="rounded-lg border border-dashed p-4 text-center">
+														<p class="text-sm text-muted-foreground">
+															No Trusted Assertions providers configured yet.
+														</p>
+													</div>
+													<Button
+														onclick={addRelatrToTaProviders}
+														disabled={isLoading}
+														variant="outline"
+														class="w-full"
+													>
+														{#if publishTaProviderMutation.isPending}
+															<Spinner class="mr-2 h-4 w-4" />
+														{:else}
+															<Plus class="mr-2 h-4 w-4" />
+														{/if}
+														Add Relatr as First Provider
+													</Button>
+												</div>
+											{/if}
+										</div>
+									{/if}
 								</div>
 							{/if}
 						</CardContent>

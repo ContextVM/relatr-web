@@ -20,3 +20,9 @@ export const taProviderKeys = {
 	status: (serverPubkey: string, subscriberPubkey: string | null) =>
 		[...taProviderKeys.all, 'status', serverPubkey, subscriberPubkey] as const
 } as const;
+
+export const nostrKeys = {
+	all: ['nostr'] as const,
+	userRelays: (pubkey: string) => [...nostrKeys.all, 'user-relays', pubkey] as const,
+	taProviders: (pubkey: string) => [...nostrKeys.all, 'ta-providers', pubkey] as const
+} as const;
