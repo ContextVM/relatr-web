@@ -46,7 +46,7 @@
 		"vite": "^7.3.0"
 	},
 	"dependencies": {
-		"@contextvm/sdk": "^0.1.46",
+		"@contextvm/sdk": "^0.1.40",
 		"@tanstack/svelte-query": "^6.0.10",
 		"applesauce-accounts": "^4.1.0",
 		"applesauce-core": "^4.4.2",
