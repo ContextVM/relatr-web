@@ -4,7 +4,7 @@
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
-	import { type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
+	import { type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
 	import {

@@ -1,6 +1,6 @@
 import { createQuery } from '@tanstack/svelte-query';
-import type { RelatrClient, ManageTaProviderOutput } from '$lib/ctxcn/RelatrClient.svelte.js';
 import { taProviderKeys } from '$lib/query-keys';
+import type { ManageTaSubscriptionOutput, RelatrClient } from '$lib/ctxcn/RelatrClient';
 
 function isTransientConnectionClosedError(err: unknown): boolean {
 	const message = err instanceof Error ? err.message : String(err);
@@ -8,18 +8,17 @@ function isTransientConnectionClosedError(err: unknown): boolean {
 }
 
 export function useTaProviderStatus(
-	relatrClient: () => RelatrClient | null,
-	serverPubkey: () => string,
-	subscriberPubkey: () => string | null
+	relatrClient: RelatrClient | null,
+	serverPubkey: string,
+	subscriberPubkey: string | undefined
 ) {
-	return createQuery<ManageTaProviderOutput | null>(() => ({
-		queryKey: taProviderKeys.status(serverPubkey(), subscriberPubkey()),
+	return createQuery<ManageTaSubscriptionOutput | null>(() => ({
+		queryKey: taProviderKeys.status(serverPubkey, subscriberPubkey),
 		queryFn: async () => {
-			const client = relatrClient();
-			if (!client) return null;
-			return await client.ManageTaProvider('get');
+			if (!relatrClient) return null;
+			return await relatrClient.ManageTaSubscription('get');
 		},
-		enabled: !!relatrClient() && !!serverPubkey() && !!subscriberPubkey(),
+		enabled: !!relatrClient && !!serverPubkey && !!subscriberPubkey,
 		retry: (failureCount, error) => {
 			if (isTransientConnectionClosedError(error)) return failureCount < 2;
 			return false;

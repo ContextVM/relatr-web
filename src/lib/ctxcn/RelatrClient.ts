@@ -6,7 +6,6 @@ import {
 	PrivateKeySigner,
 	ApplesauceRelayPool
 } from '@contextvm/sdk';
-import { activeAccount } from '$lib/services/accountManager.svelte';
 
 export interface CalculateTrustScoreInput {
 	targetPubkey: string;
@@ -100,16 +99,20 @@ export interface SearchProfilesOutput {
 	searchTimeMs: number;
 }
 
-export interface ManageTaProviderInput {
+export interface ManageTaSubscriptionInput {
 	/**
 	 * Action to perform: 'get' to check status, 'subscribe' to activate, 'unsubscribe' to deactivate
 	 */
 	action: 'get' | 'subscribe' | 'unsubscribe';
+	/**
+	 * Optional comma-separated list of custom relay URLs to publish TA events to (only used for subscribe action)
+	 */
+	customRelays?: string;
 }
 
-export interface ManageTaProviderOutput {
+export interface ManageTaSubscriptionOutput {
 	success: boolean;
-	message: string;
+	message?: string;
 	subscriberPubkey: string;
 	isActive: boolean;
 	createdAt: number | null;
@@ -118,6 +121,11 @@ export interface ManageTaProviderOutput {
 		published: boolean;
 		rank: number;
 		previousRank: number | null;
+		relayResults?: {
+			ok: boolean;
+			message?: string;
+			from: string;
+		}[];
 	};
 }
 
@@ -130,13 +138,16 @@ export type Relatr = {
 		limit?: number,
 		extendToNostr?: boolean
 	) => Promise<SearchProfilesOutput>;
-	ManageTaProvider: (action: string) => Promise<ManageTaProviderOutput>;
+	ManageTaSubscription: (
+		action: string,
+		customRelays?: string
+	) => Promise<ManageTaSubscriptionOutput>;
 };
 
 export class RelatrClient implements Relatr {
 	static readonly SERVER_PUBKEY =
 		'60a6070044e5788bf8a9d4d4e5aaa98a3853eec38c3ecc483ced19800fb6b7b0';
-	static readonly DEFAULT_RELAYS = ['ws://localhost:10547'];
+	static readonly DEFAULT_RELAYS = ['wss://relay.contextvm.org'];
 	private client: Client;
 	private transport: Transport;
 
@@ -150,14 +161,15 @@ export class RelatrClient implements Relatr {
 
 		// Private key precedence: constructor options > config file
 		const resolvedPrivateKey = options.privateKey || '';
-		const {
-			privateKey: _,
-			relays = RelatrClient.DEFAULT_RELAYS,
-			signer = options.signer || new PrivateKeySigner(resolvedPrivateKey),
-			relayHandler = new ApplesauceRelayPool(relays),
-			serverPubkey,
-			...rest
-		} = options;
+
+		// Use options.signer if provided, otherwise create from resolved private key
+		const signer = options.signer || new PrivateKeySigner(resolvedPrivateKey);
+		// Use options.relays if provided, otherwise use class DEFAULT_RELAYS
+		const relays = options.relays || RelatrClient.DEFAULT_RELAYS;
+		// Use options.relayHandler if provided, otherwise create from relays
+		const relayHandler = options.relayHandler || new ApplesauceRelayPool(relays);
+		const serverPubkey = options.serverPubkey;
+		const { privateKey: _, ...rest } = options;
 
 		this.transport = new NostrClientTransport({
 			serverPubkey: serverPubkey || RelatrClient.SERVER_PUBKEY,
@@ -227,11 +239,15 @@ export class RelatrClient implements Relatr {
 	}
 
 	/**
-	 * Manage your Trusted Assertions provider subscription. Check status, subscribe, or unsubscribe from TA services.
+	 * Manage your Trusted Assertions subscription. Check status, subscribe, or unsubscribe from TA services.
 	 * @param {string} action Action to perform: 'get' to check status, 'subscribe' to activate, 'unsubscribe' to deactivate
-	 * @returns {Promise<ManageTaProviderOutput>} The result of the manage_ta_provider operation
+	 * @param {string} customRelays [optional] Optional comma-separated list of custom relay URLs to publish TA events to (only used for subscribe action)
+	 * @returns {Promise<ManageTaSubscriptionOutput>} The result of the manage_ta_subscription operation
 	 */
-	async ManageTaProvider(action: string): Promise<ManageTaProviderOutput> {
-		return this.call('manage_ta_provider', { action });
+	async ManageTaSubscription(
+		action: string,
+		customRelays?: string
+	): Promise<ManageTaSubscriptionOutput> {
+		return this.call('manage_ta_subscription', { action, customRelays });
 	}
 }

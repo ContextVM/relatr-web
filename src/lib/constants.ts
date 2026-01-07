@@ -1,1 +1,2 @@
 export const DEFAULT_SERVER = '750682303c9f0ddad75941b49edc9d46e3ed306b9ee3335338a21a3e404c5fa3';
+export const TA_PROVIDERS_KIND = 10040;

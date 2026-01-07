@@ -6,8 +6,8 @@
 	import Spinner from './ui/spinner/spinner.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import TrustScoreDisplay from './TrustScoreDisplay.svelte';
-	import type { Relatr } from '$lib/ctxcn/RelatrClient.svelte.js';
-	import { X, EllipsisVertical } from 'lucide-svelte';
+	import type { Relatr } from '$lib/ctxcn/RelatrClient';
+	import { X } from 'lucide-svelte';
 	import { validateAndDecodePubkey } from '$lib/utils.nostr';
 	import { useTrustScore } from '$lib/queries/trust-scores';
 
@@ -20,10 +20,7 @@
 	} = $props();
 
 	// Use query for trust score with automatic caching
-	const trustScoreQuery = useTrustScore(
-		() => relatr,
-		() => targetPubkey
-	);
+	const trustScoreQuery = $derived(useTrustScore(relatr, targetPubkey));
 	const result = $derived(trustScoreQuery.data);
 	const isLoading = $derived(trustScoreQuery.isLoading);
 	const error = $derived(trustScoreQuery.error ? trustScoreQuery.error.message : null);

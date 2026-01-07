@@ -17,7 +17,7 @@ export const searchKeys = {
 
 export const taProviderKeys = {
 	all: ['ta-provider'] as const,
-	status: (serverPubkey: string, subscriberPubkey: string | null) =>
+	status: (serverPubkey: string, subscriberPubkey: string | undefined) =>
 		[...taProviderKeys.all, 'status', serverPubkey, subscriberPubkey] as const
 } as const;
 

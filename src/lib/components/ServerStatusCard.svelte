@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { RelatrClient } from '$lib/ctxcn/RelatrClient.svelte.js';
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -30,14 +29,12 @@
 		onValidate: () => void;
 	} = $props();
 
-	let isEditing = $state(false);
 	let relatrClient = $derived(getRelatrClient());
 	let serverPubkey = $derived(getServerPubkey());
+	let isEditing = $state(false);
+
 	// Use query for server stats with automatic caching
-	const serverStatsQuery = useServerStats(
-		() => relatrClient,
-		() => serverPubkey
-	);
+	const serverStatsQuery = $derived(useServerStats(relatrClient, serverPubkey));
 	const stats = $derived(serverStatsQuery.data);
 	const loading = $derived(serverStatsQuery.isLoading);
 	const error = $derived(serverStatsQuery.error ? serverStatsQuery.error.message : null);

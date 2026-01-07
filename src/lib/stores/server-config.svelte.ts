@@ -1,16 +1,15 @@
 import { browser } from '$app/environment';
 import { isHexKey } from 'applesauce-core/helpers';
 import { DEFAULT_SERVER } from '$lib/constants';
-import { RelatrClient } from '$lib/ctxcn/RelatrClient.svelte.js';
 import { activeAccount } from '$lib/services/accountManager.svelte.js';
 import { addServerToHistory, getServerHistory } from '$lib/utils';
+import { RelatrClient } from '$lib/ctxcn/RelatrClient';
+import type { IAccount } from 'applesauce-accounts';
 
 const serverConfig = $state({
 	pubkey: DEFAULT_SERVER,
 	client: null as RelatrClient | null
 });
-
-let signer = $state<unknown | null>(null);
 
 function resolveInitialServerPubkey(): string {
 	if (!browser) return DEFAULT_SERVER;
@@ -37,17 +36,12 @@ if (browser) {
 	serverConfig.pubkey = resolveInitialServerPubkey();
 
 	$effect.root(() => {
-		const subscription = activeAccount.subscribe((account) => {
-			signer = account?.signer ?? null;
-		});
-
 		$effect(() => {
-			const serverPubkey = serverConfig.pubkey;
-			const currentSigner = signer;
+			const currentSigner: IAccount['signer'] | undefined = activeAccount?.getValue()?.signer;
 
 			const client = currentSigner
-				? new RelatrClient({ serverPubkey, signer: currentSigner as never })
-				: new RelatrClient({ serverPubkey });
+				? new RelatrClient({ serverPubkey: serverConfig.pubkey, signer: currentSigner })
+				: new RelatrClient({ serverPubkey: serverConfig.pubkey });
 
 			serverConfig.client = client;
 
@@ -57,8 +51,6 @@ if (browser) {
 				});
 			};
 		});
-
-		return () => subscription.unsubscribe();
 	});
 }
 

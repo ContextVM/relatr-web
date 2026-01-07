@@ -7,6 +7,11 @@ import type { NostrEvent } from 'nostr-tools';
 import { onlyEvents } from 'applesauce-relay/operators';
 import { firstValueFrom, timeout, catchError, of, toArray } from 'rxjs';
 import { relayStore } from '$lib/stores/relay-store.svelte';
+import { RelayList } from 'nostr-tools/kinds';
+import { TA_PROVIDERS_KIND } from '$lib/constants';
+import { relaySet } from 'applesauce-core/helpers';
+
+const NOSTR_QUERY_TIMEOUT_MS = 3000;
 
 export interface UserRelayList {
 	relays: string[];
@@ -14,20 +19,19 @@ export interface UserRelayList {
 	write: string[];
 }
 
-export function useUserRelays(pubkey: () => string | null) {
+export function useUserRelays(pubkey: string | undefined) {
 	return createQuery<UserRelayList | null>(() => ({
-		queryKey: nostrKeys.userRelays(pubkey() || ''),
+		queryKey: nostrKeys.userRelays(pubkey || ''),
 		queryFn: async () => {
-			const userPubkey = pubkey();
-			if (!userPubkey) return null;
+			if (!pubkey) return null;
 
 			try {
 				// Use request method for one-time query to multiple relays
 				const events = await firstValueFrom(
-					relayPool.request(commonRelays, { kinds: [10002], authors: [userPubkey], limit: 1 }).pipe(
+					relayPool.request(commonRelays, { kinds: [RelayList], authors: [pubkey], limit: 1 }).pipe(
 						onlyEvents(),
 						toArray(),
-						timeout(3000),
+						timeout(NOSTR_QUERY_TIMEOUT_MS),
 						catchError(() => of([]))
 					)
 				);
@@ -67,64 +71,47 @@ export function useUserRelays(pubkey: () => string | null) {
 						}
 					}
 
-					// If no relays found, fallback to common relays
 					if (relays.length === 0) {
-						return {
-							relays: commonRelays,
-							read: commonRelays,
-							write: commonRelays
-						};
+						return null;
 					}
 
 					return { relays, read, write };
 				} else {
-					// No event found, fallback to common relays
-					return {
-						relays: commonRelays,
-						read: commonRelays,
-						write: commonRelays
-					};
+					return null;
 				}
 			} catch (error) {
 				console.error('Error fetching user relay list:', error);
 				// Fallback to common relays
-				return {
-					relays: commonRelays,
-					read: commonRelays,
-					write: commonRelays
-				};
+				return null;
 			}
 		},
-		enabled: !!pubkey(),
+		enabled: !!pubkey,
 		staleTime: 5 * 60 * 1000 // 5 minutes
 	}));
 }
 
 export function useUserTaProviders(
-	pubkey: () => string | null,
-	userRelays: () => UserRelayList | null
+	pubkey: string | undefined,
+	userRelays: UserRelayList | undefined
 ) {
 	return createQuery<NostrEvent | null>(() => ({
-		queryKey: nostrKeys.taProviders(pubkey() || ''),
+		queryKey: nostrKeys.taProviders(pubkey || ''),
 		queryFn: async () => {
-			const userPubkey = pubkey();
-			const relays = userRelays();
-
-			if (!userPubkey || !relays || relays.relays.length === 0) return null;
-
+			if (!pubkey) return null;
 			try {
 				// Use request method for one-time query to user's relays
+				const extraRelays = relaySet([...commonRelays, ...relayStore.selectedRelays]);
 				const events = await firstValueFrom(
 					relayPool
-						.request([...relays.relays, ...relayStore.selectedRelays], {
-							kinds: [10040],
-							authors: [userPubkey],
+						.request(relaySet([...(userRelays?.relays ?? []), ...extraRelays]), {
+							kinds: [TA_PROVIDERS_KIND],
+							authors: [pubkey],
 							limit: 1
 						})
 						.pipe(
 							onlyEvents(),
 							toArray(),
-							timeout(3000),
+							timeout(NOSTR_QUERY_TIMEOUT_MS),
 							catchError(() => of([]))
 						)
 				);
@@ -151,7 +138,8 @@ export function useUserTaProviders(
 				return null;
 			}
 		},
-		enabled: !!pubkey() && !!userRelays() && userRelays()!.relays.length > 0,
-		staleTime: 5 * 60 * 1000 // 5 minutes
+		enabled: !!pubkey,
+		staleTime: 5 * 60 * 1000,
+		retry: 1
 	}));
 }
