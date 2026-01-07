@@ -33,10 +33,10 @@
 						About
 					</a>
 					<a
-						href="/signup"
+						href="/ta"
 						class="text-sm text-muted-foreground transition-colors hover:text-foreground"
 					>
-						Sign Up
+						TAs
 					</a>
 				</nav>
 				<div class="flex items-center gap-2 sm:gap-4">
