@@ -11,7 +11,7 @@ import { RelayList } from 'nostr-tools/kinds';
 import { TA_PROVIDERS_KIND } from '$lib/constants';
 import { relaySet } from 'applesauce-core/helpers';
 
-const NOSTR_QUERY_TIMEOUT_MS = 3000;
+const NOSTR_QUERY_TIMEOUT_MS = 30000;
 
 export interface UserRelayList {
 	relays: string[];

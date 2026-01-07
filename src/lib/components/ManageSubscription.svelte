@@ -11,18 +11,14 @@
 		CheckCircle,
 		XCircle,
 		TrendingUp,
-		TrendingDown,
 		Minus,
 		Calendar,
-		RefreshCw,
-		User,
 		Settings,
 		Check,
 		ChevronDown
 	} from 'lucide-svelte';
-	import { getPubkeyDisplay } from '$lib/utils.nostr';
 	import { formatTimestamp } from '$lib/utils';
-	import { useTaProviderStatus } from '$lib/queries/ta-provider';
+	import { useTaProviderStatus, getTaCapabilityState } from '$lib/queries/ta-provider';
 	import { useUserRelays } from '$lib/queries/nostr';
 	import { activeAccount } from '$lib/services/accountManager.svelte';
 	import { getRelatrClient, getServerPubkey } from '$lib/stores/server-config.svelte';
@@ -106,19 +102,13 @@
 		}
 	}));
 
-	function refreshStatus() {
-		subscriptionQuery.refetch();
-	}
-
 	let isLoading = $derived(
 		subscriptionQuery.isLoading || subscribeMutation.isPending || unsubscribeMutation.isPending
 	);
 	let isActive = $derived(subscriptionQuery.data?.isActive ?? false);
 	let rank = $derived(subscriptionQuery.data?.rank);
-	// Check if TA is supported: undefined means server doesn't support the feature
-	let isTaSupported = $derived(
-		subscriptionQuery.data !== null && subscriptionQuery.data !== undefined
-	);
+	// TA capability state: 'unknown' | 'supported' | 'unavailable'
+	let taCapability = $derived(getTaCapabilityState(subscriptionQuery));
 </script>
 
 {#if subscriptionQuery.isLoading}
@@ -126,7 +116,17 @@
 		<Spinner class="h-8 w-8" />
 		<p class="text-sm text-muted-foreground">Loading subscription status...</p>
 	</div>
-{:else if isTaSupported && subscriptionQuery.data}
+{:else if taCapability === 'unavailable'}
+	<div class="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
+		<p class="text-sm font-medium text-amber-600">
+			Server unavailable or does not support Trusted Assertions
+		</p>
+		<p class="mt-1 text-xs text-muted-foreground">
+			The server is offline or doesn't support the Trusted Assertions feature. Subscription
+			management is not available.
+		</p>
+	</div>
+{:else if taCapability === 'supported' && subscriptionQuery.data}
 	<Collapsible.Root class="w-full">
 		<Collapsible.Trigger class="w-full justify-between">
 			<Button variant="outline" class="w-full ">
@@ -227,51 +227,14 @@
 
 			<!-- Account Information -->
 			<div class="grid gap-4 md:grid-cols-2">
-				<div class="space-y-2">
-					<div class="flex items-center gap-2">
-						<User class="h-4 w-4 text-muted-foreground" />
-						<p class="text-sm font-medium">Your Public Key</p>
-					</div>
-					<div class="flex items-center gap-2">
-						<span class="font-mono text-sm text-muted-foreground">
-							{getPubkeyDisplay(subscriptionQuery.data.subscriberPubkey)}
-						</span>
-						<Badge variant="outline" class="font-mono text-xs">
-							{subscriptionQuery.data.subscriberPubkey.slice(0, 8)}...
-						</Badge>
-					</div>
-				</div>
-
 				{#if rank}
 					<div class="space-y-2">
 						<div class="flex items-center gap-2">
 							<TrendingUp class="h-4 w-4 text-muted-foreground" />
 							<p class="text-sm font-medium">Your Rank</p>
-							{#if rank.published}
-								<Badge variant="default" class="text-xs">Published</Badge>
-							{/if}
 						</div>
 						<div class="flex items-center gap-3">
-							<span class="text-2xl font-bold">#{rank.rank}</span>
-							{#if rank.previousRank !== null}
-								<div class="flex items-center gap-1">
-									{#if rank.rank < rank.previousRank}
-										<TrendingUp class="h-4 w-4 text-green-600" />
-										<span class="text-sm text-green-600">
-											↑ {rank.previousRank - rank.rank}
-										</span>
-									{:else if rank.rank > rank.previousRank}
-										<TrendingDown class="h-4 w-4 text-red-600" />
-										<span class="text-sm text-red-600">
-											↓ {rank.rank - rank.previousRank}
-										</span>
-									{:else}
-										<Minus class="h-4 w-4 text-muted-foreground" />
-										<span class="text-sm text-muted-foreground">No change</span>
-									{/if}
-									<span class="text-xs text-muted-foreground">(was #{rank.previousRank})</span>
-								</div>
-							{/if}
+							<span class="text-2xl font-bold">{rank.rank}</span>
 						</div>
 					</div>
 				{/if}
@@ -360,11 +323,6 @@
 						Unsubscribe
 					</Button>
 				{/if}
-
-				<Button onclick={refreshStatus} variant="ghost" disabled={isLoading} class="w-full">
-					<RefreshCw class="mr-2 h-4 w-4" />
-					Refresh
-				</Button>
 			</div>
 		</Collapsible.Content>
 	</Collapsible.Root>

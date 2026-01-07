@@ -10,32 +10,16 @@
 	import AccountLoginDialog from '$lib/components/AccountLoginDialog.svelte';
 	import ManageSubscription from '$lib/components/ManageSubscription.svelte';
 	import UserTaProviders from '$lib/components/UserTaProviders.svelte';
-	import {
-		getServerPubkey,
-		setServerPubkey,
-		getRelatrClient
-	} from '$lib/stores/server-config.svelte';
+	import { getServerPubkey, setServerPubkey } from '$lib/stores/server-config.svelte';
 	import { User } from 'lucide-svelte';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
-	import { useTaProviderStatus } from '$lib/queries/ta-provider';
 
 	let serverPubkey = $derived(getServerPubkey());
-	let relatrClient = $derived(getRelatrClient());
 	let serverPubkeyInput = $state('');
 	let validationError = $state<string | null>(null);
 	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
-
-	// Check if current server supports TA feature
-	const taProviderStatusQuery = $derived(
-		useTaProviderStatus(relatrClient, serverPubkey, $activeAccount?.pubkey)
-	);
-
-	// Determine if TA is supported: true = supported, false = not supported, null = unknown/loading
-	let isTaSupported = $derived(
-		taProviderStatusQuery.data !== null && taProviderStatusQuery.data !== undefined
-	);
 
 	// Keep the input seeded from the shared store
 	$effect(() => {
@@ -100,13 +84,17 @@
 					</Card>
 
 					<!-- Main Subscription Card -->
-					{#if isTaSupported}
-						<Card class="py-6">
-							<CardContent class="w-full space-y-4">
-								<ManageSubscription />
-							</CardContent>
-						</Card>
-					{/if}
+					<Card class="py-6">
+						<CardHeader>
+							<CardTitle>Trusted Assertions Subscription</CardTitle>
+							<CardDescription>
+								Manage your subscription to the Trusted Assertions provider service.
+							</CardDescription>
+						</CardHeader>
+						<CardContent class="w-full space-y-4">
+							<ManageSubscription />
+						</CardContent>
+					</Card>
 				</div>
 			</div>
 		</main>

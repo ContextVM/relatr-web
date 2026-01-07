@@ -18,7 +18,7 @@
 	import { getPubkeyDisplay } from '$lib/utils.nostr';
 	import { useUserRelays, useUserTaProviders } from '$lib/queries/nostr';
 	import { usePublishTaProvider, type PublishTaProviderOutput } from '$lib/mutations/nostr';
-	import { useTaProviderStatus } from '$lib/queries/ta-provider';
+	import { useTaProviderStatus, getTaCapabilityState } from '$lib/queries/ta-provider';
 	import { activeAccount } from '$lib/services/accountManager.svelte';
 	import { getServerPubkey, getRelatrClient } from '$lib/stores/server-config.svelte';
 	import { commonRelays } from '$lib/services/relay-pool';
@@ -53,10 +53,8 @@
 		)
 	);
 
-	// Determine if TA is supported: true = supported, false = not supported, null = unknown/loading
-	let isTaSupported = $derived(
-		taProviderStatusQuery.data !== null && taProviderStatusQuery.data !== undefined
-	);
+	// TA capability state: 'unknown' | 'supported' | 'unavailable'
+	let taCapability = $derived(getTaCapabilityState(taProviderStatusQuery));
 	// Get all TA provider tags
 	let taProviderTags = $derived(
 		(userTaProvidersQuery.data?.tags ?? []).filter((tag) => tag[0].startsWith('30382:'))
@@ -140,13 +138,12 @@
 	let isLoading = $derived(
 		publishTaProviderMutation.isPending ||
 			userRelaysQuery.isLoading ||
-			userTaProvidersQuery.isLoading ||
-			taProviderStatusQuery.isLoading
+			userTaProvidersQuery.isLoading
 	);
 </script>
 
 <div class="space-y-4">
-	{#if userRelaysQuery.isLoading || userTaProvidersQuery.isLoading || taProviderStatusQuery.isLoading}
+	{#if userRelaysQuery.isLoading || userTaProvidersQuery.isLoading}
 		<div class="flex flex-col items-center justify-center gap-3 py-6">
 			<Spinner class="h-6 w-6" />
 			<p class="text-sm text-muted-foreground">Loading your TA providers...</p>
@@ -337,21 +334,25 @@
 					<p class="text-sm text-muted-foreground">
 						Add this Relatr server to your Trusted Assertions providers list.
 					</p>
-					{#if isTaSupported === false}
+					{#if taCapability === 'unavailable'}
 						<div class="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
 							<p class="text-sm font-medium text-amber-600">
-								This server does not support Trusted Assertions
+								Server unavailable or does not support Trusted Assertions
 							</p>
 							<p class="mt-1 text-xs text-muted-foreground">
-								You cannot add this server as a TA provider because it does not support the feature.
+								You cannot add this server as a TA provider because it is offline or doesn't support
+								the feature.
 							</p>
 						</div>
 					{:else}
 						<Button
 							onclick={addRelatrToTaProviders}
-							disabled={isLoading || publishTaProviderMutation.isPending || !isTaSupported}
+							disabled={isLoading ||
+								publishTaProviderMutation.isPending ||
+								taCapability !== 'supported'}
 							variant="outline"
 							class="w-full"
+							title={taCapability === 'unknown' ? 'Checking server capability...' : undefined}
 						>
 							{#if publishTaProviderMutation.isPending || isLoading}
 								<Spinner class="mr-2 h-4 w-4" />
@@ -361,17 +362,6 @@
 							Add current Relatr service to Providers
 						</Button>
 					{/if}
-				</div>
-			{:else}
-				<div class="rounded-lg border border-green-600/30 bg-green-600/10 p-4">
-					<div class="flex items-center gap-3">
-						<div>
-							<p class="text-sm font-medium text-green-600">Relatr is in your providers list</p>
-							<p class="text-xs text-muted-foreground">
-								This server is already configured as a Trusted Assertions provider.
-							</p>
-						</div>
-					</div>
 				</div>
 			{/if}
 		</div>
@@ -396,21 +386,25 @@
 			<div class="rounded-lg border border-dashed p-4 text-center">
 				<p class="text-sm text-muted-foreground">No Trusted Assertions providers configured yet.</p>
 			</div>
-			{#if isTaSupported === false}
+			{#if taCapability === 'unavailable'}
 				<div class="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
 					<p class="text-sm font-medium text-amber-600">
-						This server does not support Trusted Assertions
+						Server unavailable or does not support Trusted Assertions
 					</p>
 					<p class="mt-1 text-xs text-muted-foreground">
-						You cannot add this server as a TA provider because it does not support the feature.
+						You cannot add this server as a TA provider because it is offline or doesn't support the
+						feature.
 					</p>
 				</div>
 			{:else}
 				<Button
 					onclick={addRelatrToTaProviders}
-					disabled={isLoading || publishTaProviderMutation.isPending || !isTaSupported}
+					disabled={isLoading ||
+						publishTaProviderMutation.isPending ||
+						taCapability !== 'supported'}
 					variant="outline"
 					class="w-full"
+					title={taCapability === 'unknown' ? 'Checking server capability...' : undefined}
 				>
 					{#if publishTaProviderMutation.isPending}
 						<Spinner class="mr-2 h-4 w-4" />

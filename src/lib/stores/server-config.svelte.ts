@@ -11,6 +11,8 @@ const serverConfig = $state({
 	client: null as RelatrClient | null
 });
 
+let signer = $state<IAccount['signer'] | undefined>(undefined);
+
 function resolveInitialServerPubkey(): string {
 	if (!browser) return DEFAULT_SERVER;
 
@@ -36,8 +38,11 @@ if (browser) {
 	serverConfig.pubkey = resolveInitialServerPubkey();
 
 	$effect.root(() => {
+		const subscription = activeAccount.subscribe((account) => {
+			signer = account?.signer ?? null;
+		});
 		$effect(() => {
-			const currentSigner: IAccount['signer'] | undefined = activeAccount?.getValue()?.signer;
+			const currentSigner = signer;
 
 			const client = currentSigner
 				? new RelatrClient({ serverPubkey: serverConfig.pubkey, signer: currentSigner })
@@ -51,6 +56,7 @@ if (browser) {
 				});
 			};
 		});
+		return () => subscription.unsubscribe();
 	});
 }
 
