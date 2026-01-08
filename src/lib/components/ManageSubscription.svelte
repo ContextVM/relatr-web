@@ -51,16 +51,16 @@
 			});
 
 			if (result.success) {
-				toast.success('Successfully subscribed to Trusted Assertions provider');
-				// Reset custom relays after successful subscription
+				toast.success('Provider enabled successfully');
+				// Reset custom relays after successful enable
 				customRelays = '';
 				showAdvanced = false;
 			} else {
-				toast.error(result.message || 'Subscription failed');
+				toast.error(result.message || 'Failed to enable provider');
 			}
 		},
 		onError: (err) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to subscribe');
+			toast.error(err instanceof Error ? err.message : 'Failed to enable provider');
 		}
 	}));
 
@@ -77,13 +77,13 @@
 			});
 
 			if (result.success) {
-				toast.success('Successfully unsubscribed from Trusted Assertions provider');
+				toast.success('Provider disabled successfully');
 			} else {
-				toast.error(result.message || 'Unsubscription failed');
+				toast.error(result.message || 'Failed to disable provider');
 			}
 		},
 		onError: (err) => {
-			toast.error(err instanceof Error ? err.message : 'Failed to unsubscribe');
+			toast.error(err instanceof Error ? err.message : 'Failed to disable provider');
 		}
 	}));
 
@@ -99,7 +99,7 @@
 {#if subscriptionQuery.isLoading}
 	<div class="flex flex-col items-center justify-center gap-3 py-8">
 		<Spinner class="h-8 w-8" />
-		<p class="text-sm text-muted-foreground">Loading subscription status...</p>
+		<p class="text-sm text-muted-foreground">Loading provider status...</p>
 	</div>
 {:else if taCapability === 'unavailable'}
 	<div class="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
@@ -107,8 +107,8 @@
 			Server unavailable or does not support Trusted Assertions
 		</p>
 		<p class="mt-1 text-xs text-muted-foreground">
-			The server is offline or doesn't support the Trusted Assertions feature. Subscription
-			management is not available.
+			The server is offline or doesn't support the Trusted Assertions feature. Provider management
+			is not available.
 		</p>
 	</div>
 {:else if taCapability === 'supported' && subscriptionQuery.data}
@@ -122,7 +122,7 @@
 					<XCircle class="h-5 w-5 text-muted-foreground" />
 				{/if}
 				<div>
-					<p class="text-sm font-medium">Subscription Status</p>
+					<p class="text-sm font-medium">Provider status on this server</p>
 					<Badge variant={isActive ? 'default' : 'secondary'}>
 						{isActive ? 'Active' : 'Inactive'}
 					</Badge>
@@ -179,12 +179,12 @@
 						onclick={() => subscribeMutation.mutate()}
 						disabled={isLoading}
 						class="w-full"
-						data-subscribe-button
+						data-enable-button
 					>
 						{#if subscribeMutation.isPending}
 							<Spinner class="mr-2 h-4 w-4" />
 						{/if}
-						Subscribe to Trusted Assertions
+						Enable Provider
 					</Button>
 
 					<!-- Advanced Options -->
@@ -230,7 +230,7 @@
 					{#if unsubscribeMutation.isPending}
 						<Spinner class="mr-2 h-4 w-4" />
 					{/if}
-					Unsubscribe
+					Disable Provider
 				</Button>
 			{/if}
 		</div>

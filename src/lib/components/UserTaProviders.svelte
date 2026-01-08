@@ -4,18 +4,20 @@
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { toast } from 'svelte-sonner';
-	import { List, Edit2, Check, Trash2, RefreshCw } from 'lucide-svelte';
+	import { List, Edit2, Check, Trash2, RefreshCw, Plus } from 'lucide-svelte';
 	import { getPubkeyDisplay } from '$lib/utils.nostr';
 	import { useUserRelays, useUserTaProviders } from '$lib/queries/nostr';
 	import { usePublishTaProvider } from '$lib/mutations/nostr';
 	import { activeAccount } from '$lib/services/accountManager.svelte';
-	import { getServerPubkey } from '$lib/stores/server-config.svelte';
+	import { getServerPubkey, getRelatrClient } from '$lib/stores/server-config.svelte';
 	import { commonRelays } from '$lib/services/relay-pool';
 	import { relaySet } from 'applesauce-core/helpers';
 	import { relayStore } from '$lib/stores/relay-store.svelte';
 	import { queryClient } from '$lib/query-client';
+	import { useTaProviderStatus, getTaCapabilityState } from '$lib/queries/ta-provider';
 
 	let serverPubkey = $derived(getServerPubkey());
+	let relatrClient = $derived(getRelatrClient());
 	let currentUserPubkey = $derived($activeAccount?.pubkey);
 	const userRelaysQuery = $derived(useUserRelays(currentUserPubkey));
 
@@ -36,6 +38,16 @@
 
 	// Check if any providers are selected
 	let hasSelectedProviders = $derived(selectedProviders.length > 0);
+
+	// Check if current server supports TA capability
+	const taProviderStatusQuery = $derived(
+		useTaProviderStatus(relatrClient, serverPubkey, currentUserPubkey)
+	);
+	let taCapability = $derived(getTaCapabilityState(taProviderStatusQuery));
+	let serverSupportsTa = $derived(taCapability === 'supported');
+
+	// Callback prop (Svelte 5 preferred over createEventDispatcher)
+	let { openProviderEnablement }: { openProviderEnablement?: () => void } = $props();
 
 	function removeSelectedProviders() {
 		if (!currentUserPubkey || selectedProviders.length === 0) return;
@@ -110,7 +122,7 @@
 				<div class="mb-3 flex items-center justify-between">
 					<div class="flex items-center gap-2">
 						<List class="h-4 w-4 text-muted-foreground" />
-						<p class="text-sm font-medium">Your Providers</p>
+						<p class="text-sm font-medium">Your Trusted Providers</p>
 						{#if taProviderTags.length > 0}
 							<Badge variant="secondary" class="text-xs">{taProviderTags.length}</Badge>
 						{/if}
@@ -154,7 +166,7 @@
 								<div class="flex items-center gap-2">
 									{#if isEditMode}
 										<Checkbox
-											checked={false}
+											checked={selectedProviders.includes(tag[1])}
 											onclick={() => toggleProviderSelection(tag[1])}
 											disabled={publishTaProviderMutation.isPending}
 										/>
@@ -201,10 +213,24 @@
 						</div>
 					{/if}
 				{:else}
-					<div class="rounded-md border border-dashed p-4 text-center">
-						<p class="text-sm text-muted-foreground">
-							No providers configured yet. Add providers to start receiving trusted assertions.
-						</p>
+					<div class="space-y-4 rounded-md border border-dashed p-6 text-center">
+						<div class="space-y-2">
+							<p class="text-sm font-medium">No trusted providers yet</p>
+							<p class="text-sm text-muted-foreground">
+								Your client will ignore Trusted Assertion data until you add at least one provider.
+							</p>
+						</div>
+						{#if serverSupportsTa}
+							<Button onclick={() => openProviderEnablement?.()} variant="default" size="sm">
+								<Plus class="mr-2 h-4 w-4" />
+								Enable this Relatr server as provider
+							</Button>
+						{:else}
+							<p class="text-xs text-muted-foreground">
+								This server doesn't support Trusted Assertions. Try a different server or add a
+								provider manually.
+							</p>
+						{/if}
 					</div>
 				{/if}
 			</div>

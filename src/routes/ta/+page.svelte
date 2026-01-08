@@ -15,7 +15,15 @@
 		setServerPubkey,
 		getRelatrClient
 	} from '$lib/stores/server-config.svelte';
-	import { User, Info, AlertCircle, CheckCircle, Plus, ArrowRight } from 'lucide-svelte';
+	import {
+		User,
+		Info,
+		AlertCircle,
+		CheckCircle,
+		Plus,
+		ChevronDown,
+		ChevronRight
+	} from 'lucide-svelte';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
@@ -23,7 +31,7 @@
 	import { useTaProviderStatus, getTaCapabilityState } from '$lib/queries/ta-provider';
 	import { useUserTaProviders, useUserRelays } from '$lib/queries/nostr';
 	import { usePublishTaProvider } from '$lib/mutations/nostr';
-	import * as Tabs from '$lib/components/ui/tabs/index.js';
+	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import { Badge } from '$lib/components/ui/badge/index.js';
 	import { commonRelays } from '$lib/services/relay-pool';
 	import { relaySet } from 'applesauce-core/helpers';
@@ -38,7 +46,7 @@
 	let serverPubkeyInput = $state('');
 	let validationError = $state<string | null>(null);
 	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
-	let activeTab = $state<'providers' | 'subscribe'>('providers');
+	let providerSectionOpen = $state(false);
 
 	// Check if current server supports TA feature
 	const taProviderStatusQuery = $derived(
@@ -161,138 +169,139 @@
 									<Info class="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
 									<div class="space-y-2 text-sm text-muted-foreground">
 										<p>
-											<strong>Providers list:</strong> Your client will only accept assertions from
-											services listed here.
+											<strong>Trusted providers:</strong> Your client will only accept assertions
+											from services listed here.
 											<span class="text-xs">(published in kind 10040)</span>
 										</p>
 										<p>
-											<strong>Subscription:</strong> Ask the selected Relatr server to publish your
-											assertions to your relays.
+											<strong>Enable provider on this server:</strong> Ask the selected Relatr
+											server to publish your assertions to your relays.
 											<span class="text-xs">(kind 30382)</span>
 										</p>
 									</div>
 								</div>
 							</div>
 
-							<!-- Tabs -->
-							<Tabs.Root bind:value={activeTab} class="w-full">
-								<Tabs.List class="grid w-full grid-cols-2">
-									<Tabs.Trigger value="providers">
-										Providers
-										<Badge variant="secondary" class="ml-2 text-xs">
-											{userTaProvidersQuery.data?.tags.filter((t) => t[0].startsWith('30382:'))
-												.length || 0}
-										</Badge>
-									</Tabs.Trigger>
-									{#if taCapability === 'supported'}
-										<Tabs.Trigger value="subscribe">
-											Subscription
-											{#if isSubscribed}
-												<Badge variant="default" class="ml-2 text-xs">Active</Badge>
-											{/if}
-										</Tabs.Trigger>
-									{/if}
-								</Tabs.List>
-
-								<!-- Providers Tab -->
-								<Tabs.Content value="providers" class="space-y-4 pt-6">
-									<!-- Callout: Guide based on subscription status -->
-									{#if taCapability === 'supported' && !relatrInTaProviders}
-										{#if !isSubscribed}
-											<div class="rounded-lg border border-blue-600/30 bg-blue-600/10 p-4">
-												<div class="flex gap-3">
-													<AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
-													<div class="flex-1 space-y-2">
-														<p class="text-sm font-medium text-blue-600">
-															Step 1: Subscribe, Step 2: Add to providers
-														</p>
-														<p class="text-xs text-muted-foreground">
-															This Relatr server can publish assertions. Subscribe first, then add
-															the server to your providers list so your client can consume them.
-														</p>
-														<Button
-															onclick={() => (activeTab = 'subscribe')}
-															variant="default"
-															size="sm"
-															class="mt-2"
-														>
-															<ArrowRight class="mr-2 h-4 w-4" />
-															Go to Subscription
-														</Button>
-													</div>
-												</div>
+							<!-- Setup Status Banner -->
+							{#if taCapability === 'supported' && !relatrInTaProviders}
+								{#if !isSubscribed}
+									<div class="rounded-lg border border-blue-600/30 bg-blue-600/10 p-4">
+										<div class="flex gap-3">
+											<AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-blue-600" />
+											<div class="flex-1 space-y-2">
+												<p class="text-sm font-medium text-blue-600">
+													Step 1: Enable this Relatr server as provider
+												</p>
+												<p class="text-xs text-muted-foreground">
+													This Relatr server can publish assertions. Enable it below, then add the
+													server to your trusted providers list so your client can consume them.
+												</p>
+												<Button
+													onclick={() => (providerSectionOpen = true)}
+													href="#enable-provider"
+													variant="default"
+													size="sm"
+													class="mt-2"
+												>
+													<Plus class="mr-2 h-4 w-4" />
+													Enable Provider
+												</Button>
 											</div>
-										{:else}
-											<div class="rounded-lg border border-green-600/30 bg-green-600/10 p-4">
-												<div class="flex gap-3">
-													<CheckCircle class="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
-													<div class="flex-1 space-y-2">
-														<p class="text-sm font-medium text-green-600">
-															Add this server to your providers
-														</p>
-														<p class="text-xs text-muted-foreground">
-															You're subscribed to this server. Add it to your providers list so
-															your client can consume its assertions.
-														</p>
-														<Button
-															onclick={addCurrentServerToProviders}
-															variant="default"
-															size="sm"
-															class="mt-2"
-															disabled={publishTaProviderMutation.isPending}
-														>
-															{#if publishTaProviderMutation.isPending}
-																<Spinner class="mr-2 h-4 w-4" />
-															{:else}
-																<Plus class="mr-2 h-4 w-4" />
-															{/if}
-															Add to Providers
-														</Button>
-													</div>
-												</div>
+										</div>
+									</div>
+								{:else}
+									<div class="rounded-lg border border-green-600/30 bg-green-600/10 p-4">
+										<div class="flex gap-3">
+											<CheckCircle class="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+											<div class="flex-1 space-y-2">
+												<p class="text-sm font-medium text-green-600">
+													Step 2: Add this server to your trusted providers
+												</p>
+												<p class="text-xs text-muted-foreground">
+													Provider is enabled. Add it to your trusted providers list so your client
+													can consume its assertions.
+												</p>
+												<Button
+													onclick={addCurrentServerToProviders}
+													variant="default"
+													size="sm"
+													class="mt-2"
+													disabled={publishTaProviderMutation.isPending}
+												>
+													{#if publishTaProviderMutation.isPending}
+														<Spinner class="mr-2 h-4 w-4" />
+													{:else}
+														<Plus class="mr-2 h-4 w-4" />
+													{/if}
+													Add to Trusted Providers
+												</Button>
 											</div>
-										{/if}
-									{/if}
-
-									<!-- UserTaProviders component -->
-									<UserTaProviders />
-								</Tabs.Content>
-
-								<!-- Subscribe Tab (only when supported) -->
-								{#if taCapability === 'supported'}
-									<Tabs.Content value="subscribe" class="space-y-4 pt-6">
-										<!-- Callout: Reminder if subscribed but not in providers -->
-										{#if isSubscribed && !relatrInTaProviders}
-											<div class="rounded-lg border border-amber-600/30 bg-amber-600/10 p-4">
-												<div class="flex gap-3">
-													<AlertCircle class="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
-													<div class="flex-1 space-y-2">
-														<p class="text-sm font-medium text-amber-600">
-															Complete setup: Add server to providers
-														</p>
-														<p class="text-xs text-muted-foreground">
-															You're subscribed to this server, but your client won't accept its
-															assertions until you add it to your providers list.
-														</p>
-														<Button
-															onclick={() => (activeTab = 'providers')}
-															variant="outline"
-															size="sm"
-															class="mt-2"
-														>
-															<ArrowRight class="mr-2 h-4 w-4" />
-															Go to Providers
-														</Button>
-													</div>
-												</div>
-											</div>
-										{/if}
-
-										<!-- ManageSubscription component -->
-										<ManageSubscription />
-									</Tabs.Content>
+										</div>
+									</div>
 								{/if}
-							</Tabs.Root>
+							{:else if relatrInTaProviders && isSubscribed}
+								<div class="rounded-lg border border-green-600/30 bg-green-600/10 p-4">
+									<div class="flex gap-3">
+										<CheckCircle class="mt-0.5 h-5 w-5 shrink-0 text-green-600" />
+										<div class="flex-1 space-y-2">
+											<p class="text-sm font-medium text-green-600">Setup complete ✓</p>
+											<p class="text-xs text-muted-foreground">
+												This Relatr server is enabled and added to your trusted providers list. Your
+												client will accept its assertions.
+											</p>
+										</div>
+									</div>
+								</div>
+							{/if}
+
+							<!-- Providers management (primary content) -->
+							<div id="providers" class="scroll-mt-24">
+								<UserTaProviders openProviderEnablement={() => (providerSectionOpen = true)} />
+							</div>
+							<!-- Enable Provider Section (collapsible, only when supported) -->
+							{#if taCapability === 'supported'}
+								<Collapsible.Root
+									bind:open={providerSectionOpen}
+									class="w-full scroll-mt-24"
+									id="enable-provider"
+								>
+									<Collapsible.Trigger class="w-full">
+										<Card class="cursor-pointer py-4 transition-colors hover:bg-muted/50">
+											<CardContent class="flex items-center justify-between">
+												<div class="flex items-center gap-3">
+													{#if providerSectionOpen}
+														<ChevronDown class="h-4 w-4 text-muted-foreground" />
+													{:else}
+														<ChevronRight class="h-4 w-4 text-muted-foreground" />
+													{/if}
+													<div>
+														<p class="font-medium">
+															{isSubscribed
+																? `Manage this provider`
+																: `Enable this Relatr server as provider`}
+														</p>
+														<p class="text-sm text-muted-foreground">
+															{isSubscribed
+																? 'Provider enabled - this server will publish assertions for you'
+																: 'Enable to start receiving assertions from this server'}
+														</p>
+													</div>
+												</div>
+												<Badge variant={isSubscribed ? 'default' : 'secondary'}>
+													{isSubscribed ? 'Active' : 'Inactive'}
+												</Badge>
+											</CardContent>
+										</Card>
+									</Collapsible.Trigger>
+									<Collapsible.Content class="mt-4">
+										<Card class="py-6">
+											<CardContent>
+												<ManageSubscription />
+											</CardContent>
+										</Card>
+									</Collapsible.Content>
+								</Collapsible.Root>
+							{/if}
 						</CardContent>
 					</Card>
 				</div>
