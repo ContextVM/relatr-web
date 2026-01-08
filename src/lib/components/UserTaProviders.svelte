@@ -4,7 +4,7 @@
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { toast } from 'svelte-sonner';
-	import { List, Edit2, Check, Trash2, RefreshCw, Plus } from 'lucide-svelte';
+	import { List, Edit2, Check, Trash2, RefreshCw } from 'lucide-svelte';
 	import { getPubkeyDisplay } from '$lib/utils.nostr';
 	import { useUserRelays, useUserTaProviders } from '$lib/queries/nostr';
 	import { usePublishTaProvider } from '$lib/mutations/nostr';
@@ -15,6 +15,8 @@
 	import { relayStore } from '$lib/stores/relay-store.svelte';
 	import { queryClient } from '$lib/query-client';
 	import { useTaProviderStatus, getTaCapabilityState } from '$lib/queries/ta-provider';
+	import CurrentServerProviderRow from '$lib/components/CurrentServerProviderRow.svelte';
+	import { taProviderKeys, nostrKeys } from '$lib/query-keys';
 
 	let serverPubkey = $derived(getServerPubkey());
 	let relatrClient = $derived(getRelatrClient());
@@ -46,8 +48,8 @@
 	let taCapability = $derived(getTaCapabilityState(taProviderStatusQuery));
 	let serverSupportsTa = $derived(taCapability === 'supported');
 
-	// Callback prop (Svelte 5 preferred over createEventDispatcher)
-	let { openProviderEnablement }: { openProviderEnablement?: () => void } = $props();
+	// Check if current server is in user's TA providers list
+	let relatrInTaProviders = $derived(taProviderTags.some((tag) => tag[1] === serverPubkey));
 
 	function removeSelectedProviders() {
 		if (!currentUserPubkey || selectedProviders.length === 0) return;
@@ -63,8 +65,8 @@
 			{
 				onSuccess: (result) => {
 					// Invalidate queries to refresh UI
-					queryClient.invalidateQueries({ queryKey: ['userTaProviders', currentUserPubkey] });
-					queryClient.invalidateQueries({ queryKey: ['taProviderStatus'] });
+					queryClient.invalidateQueries({ queryKey: nostrKeys.taProviders(currentUserPubkey) });
+					queryClient.invalidateQueries({ queryKey: taProviderKeys.all });
 
 					toast.success(
 						`Successfully removed ${selectedProviders.length} provider(s) (published to ${result.publishedTo.length} relay(s))`
@@ -79,10 +81,47 @@
 		);
 	}
 
-	function toggleProviderSelection(providerPubkey: string) {
-		selectedProviders = selectedProviders.includes(providerPubkey)
-			? selectedProviders.filter((p) => p !== providerPubkey)
-			: [...selectedProviders, providerPubkey];
+	// Add current server to trusted providers
+	function addCurrentServerToProviders() {
+		if (!currentUserPubkey || !serverPubkey) return;
+		const extraRelays = relaySet([...commonRelays, ...relayStore.selectedRelays]);
+
+		publishTaProviderMutation.mutate(
+			{
+				userPubkey: currentUserPubkey,
+				userRelays: relaySet([...(userRelaysQuery.data?.relays ?? []), ...extraRelays]),
+				existingEvent: userTaProvidersQuery.data || null
+			},
+			{
+				onSuccess: (result) => {
+					// Invalidate queries to refresh UI
+					queryClient.invalidateQueries({
+						queryKey: taProviderKeys.status(serverPubkey, currentUserPubkey)
+					});
+					queryClient.invalidateQueries({ queryKey: nostrKeys.taProviders(currentUserPubkey) });
+
+					toast.success(
+						`Successfully added server to providers (published to ${result.publishedTo.length} relay(s))`
+					);
+				},
+				onError: (error) => {
+					toast.error(error instanceof Error ? error.message : 'Failed to add server to providers');
+				}
+			}
+		);
+	}
+
+	// Handle after provider enablement change (for query invalidation)
+	function handleAfterProviderEnablementChange() {
+		if (!currentUserPubkey) return;
+		queryClient.invalidateQueries({ queryKey: nostrKeys.taProviders(currentUserPubkey) });
+	}
+
+	function setProviderSelected(providerPubkey: string, checked: boolean) {
+		// Single assignment keeps updates predictable with Bits UI controlled checkbox
+		selectedProviders = checked
+			? Array.from(new Set([...selectedProviders, providerPubkey]))
+			: selectedProviders.filter((p) => p !== providerPubkey);
 	}
 
 	function refreshProviders() {
@@ -99,8 +138,8 @@
 
 <div class="space-y-4">
 	{#if userRelaysQuery.isLoading || userTaProvidersQuery.isLoading}
-		<div class="flex flex-col items-center justify-center gap-3 py-6">
-			<Spinner class="h-6 w-6" />
+		<div class="flex items-center justify-center gap-3 py-4">
+			<Spinner class="h-5 w-5" />
 			<p class="text-sm text-muted-foreground">Loading your providers...</p>
 		</div>
 	{:else if userTaProvidersQuery.isError}
@@ -161,28 +200,41 @@
 				</div>
 				{#if taProviderTags.length > 0}
 					<div class="space-y-2">
-						{#each taProviderTags as tag (tag[1])}
+						<!-- Current server provider row (collapsible) -->
+						{#if serverPubkey}
+							<CurrentServerProviderRow
+								isTrusted={relatrInTaProviders}
+								onAddTrusted={addCurrentServerToProviders}
+								onAfterProviderEnablementChange={handleAfterProviderEnablementChange}
+								{isEditMode}
+								isSelected={selectedProviders.includes(serverPubkey)}
+								onSetSelected={(checked) => setProviderSelected(serverPubkey, checked)}
+								isAdding={publishTaProviderMutation.isPending}
+							/>
+						{/if}
+
+						<!-- Other provider rows -->
+						{#each taProviderTags.filter((tag) => tag[1] !== serverPubkey) as tag (tag[1])}
+							{@const providerPubkey = tag[1]}
+							{@const getChecked = () => selectedProviders.includes(providerPubkey)}
+							{@const setChecked = (checked: boolean) =>
+								setProviderSelected(providerPubkey, checked)}
 							<div class="flex items-center justify-between rounded-md bg-muted/30 p-3">
 								<div class="flex items-center gap-2">
-									{#if isEditMode}
-										<Checkbox
-											checked={selectedProviders.includes(tag[1])}
-											onclick={() => toggleProviderSelection(tag[1])}
-											disabled={publishTaProviderMutation.isPending}
-										/>
-									{/if}
 									<Badge variant="outline" class="font-mono text-xs">
 										{tag[0]}
 									</Badge>
 									<span class="font-mono text-sm text-muted-foreground">
-										{getPubkeyDisplay(tag[1])}
+										{getPubkeyDisplay(providerPubkey)}
 									</span>
 								</div>
-								<div class="flex items-center gap-2">
-									{#if tag[1] === serverPubkey}
-										<Badge variant="default" class="text-xs">Current</Badge>
-									{/if}
-								</div>
+								{#if isEditMode}
+									<Checkbox
+										bind:checked={getChecked, setChecked}
+										onclick={(e) => e.stopPropagation()}
+										disabled={publishTaProviderMutation.isPending}
+									/>
+								{/if}
 							</div>
 						{/each}
 					</div>
@@ -220,11 +272,17 @@
 								Your client will ignore Trusted Assertion data until you add at least one provider.
 							</p>
 						</div>
-						{#if serverSupportsTa}
-							<Button onclick={() => openProviderEnablement?.()} variant="default" size="sm">
-								<Plus class="mr-2 h-4 w-4" />
-								Enable this Relatr server as provider
-							</Button>
+						{#if serverSupportsTa && serverPubkey}
+							<!-- Current server provider row will show add CTA -->
+							<CurrentServerProviderRow
+								isTrusted={relatrInTaProviders}
+								onAddTrusted={addCurrentServerToProviders}
+								onAfterProviderEnablementChange={handleAfterProviderEnablementChange}
+								{isEditMode}
+								isSelected={selectedProviders.includes(serverPubkey)}
+								onSetSelected={(checked) => setProviderSelected(serverPubkey, checked)}
+								isAdding={publishTaProviderMutation.isPending}
+							/>
 						{:else}
 							<p class="text-xs text-muted-foreground">
 								This server doesn't support Trusted Assertions. Try a different server or add a
