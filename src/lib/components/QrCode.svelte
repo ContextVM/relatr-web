@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { generate } from 'lean-qr';
 	import { onMount } from 'svelte';
 
 	let {
@@ -11,13 +10,32 @@
 	} = $props();
 
 	let canvas: HTMLCanvasElement;
+	let mounted = false;
 
 	onMount(() => {
+		mounted = true;
+		return () => {
+			mounted = false;
+		};
+	});
+
+	async function renderQr() {
+		// Avoid running during SSR/hydration edge-cases
+		if (!mounted) return;
+		if (!canvas) return;
 		if (!data) return;
 
 		try {
-			const code = generate(data);
-			code.toCanvas(canvas, {
+			// Dynamic import avoids bundler/SSR quirks that can show up only in production deployments.
+			const mod = await import('lean-qr');
+			const generate = mod.generate as (input: string) => unknown;
+			const qr: any = generate(data);
+
+			if (!qr || typeof qr.toCanvas !== 'function') {
+				throw new TypeError('lean-qr returned an invalid QR object');
+			}
+
+			qr.toCanvas(canvas, {
 				on: [0, 0, 0, 255], // black
 				off: [255, 255, 255, 255], // white background
 				padX: 4,
@@ -30,6 +48,11 @@
 		} catch (error) {
 			console.error('Failed to generate QR code:', error);
 		}
+	}
+
+	// Re-render when props/canvas become available or change.
+	$effect(() => {
+		void renderQr();
 	});
 </script>
 
