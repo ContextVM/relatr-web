@@ -5,7 +5,7 @@ export const defaultRelays = relays;
 
 // Reactive relay store using Svelte 5 $state
 export const relayStore = $state({
-	selectedRelays: !dev ? devRelay : relays,
+	selectedRelays: dev ? devRelay : relays,
 	relayChangeCallback: null as ((relays: string[]) => void) | null
 });
 
