@@ -1,7 +1,10 @@
 <script>
-	import { MoonIcon, SunIcon } from 'lucide-svelte';
+	import { LogOut, MoonIcon, SunIcon } from 'lucide-svelte';
 	import Button from './ui/button/button.svelte';
 	import { toggleMode } from 'mode-watcher';
+	import AccountLoginDialog from './AccountLoginDialog.svelte';
+	import ProfileCard from './ProfileCard.svelte';
+	import { activeAccount, logout } from '$lib/services/accountManager.svelte';
 </script>
 
 <header class="border-b bg-card">
@@ -22,14 +25,34 @@
 				</div>
 			</a>
 			<div class=" flex items-center gap-4">
-				<nav>
+				<nav class="flex gap-4">
 					<a
 						href="/about"
 						class="text-sm text-muted-foreground transition-colors hover:text-foreground"
 					>
 						About
 					</a>
+					<a
+						href="/ta"
+						class="text-sm text-muted-foreground transition-colors hover:text-foreground"
+					>
+						TAs
+					</a>
 				</nav>
+				<div class="flex items-center gap-2 sm:gap-4">
+					{#if $activeAccount}
+						<div class="hidden items-center gap-2 sm:flex sm:gap-3">
+							<ProfileCard pubkey={$activeAccount.pubkey} />
+							<Button variant="ghost" size="icon" onclick={logout} aria-label="Logout">
+								<LogOut class="h-4 w-4" />
+							</Button>
+						</div>
+					{:else}
+						<div class="hidden sm:block">
+							<AccountLoginDialog />
+						</div>
+					{/if}
+				</div>
 				<Button onclick={toggleMode} variant="outline" size="icon">
 					<SunIcon
 						class="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all! dark:scale-0 dark:-rotate-90"

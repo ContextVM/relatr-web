@@ -1,20 +1,14 @@
 import { createQuery } from '@tanstack/svelte-query';
-import type { Relatr, CalculateTrustScoreOutput } from '$lib/ctxcn/RelatrClient.js';
+import type { Relatr, CalculateTrustScoreOutput } from '$lib/ctxcn/RelatrClient';
 import { trustScoreKeys } from '$lib/query-keys';
 
-export function useTrustScore(
-	relatrClient: () => Relatr | null,
-	targetPubkey: () => string,
-	weightingScheme?: () => string | undefined
-) {
+export function useTrustScore(relatrClient: Relatr | null, targetPubkey: string) {
 	return createQuery<CalculateTrustScoreOutput | null>(() => ({
-		queryKey: trustScoreKeys.detail(targetPubkey(), weightingScheme?.()),
+		queryKey: trustScoreKeys.detail(targetPubkey),
 		queryFn: async () => {
-			const client = relatrClient();
-			const pubkey = targetPubkey();
-			if (!client || !pubkey) return null;
-			return await client.CalculateTrustScore(pubkey, weightingScheme?.());
+			if (!relatrClient || !targetPubkey) return null;
+			return await relatrClient.CalculateTrustScore(targetPubkey);
 		},
-		enabled: !!relatrClient() && !!targetPubkey()
+		enabled: !!relatrClient && !!targetPubkey
 	}));
 }

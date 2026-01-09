@@ -1,18 +1,15 @@
 import { createQuery } from '@tanstack/svelte-query';
-import type { RelatrClient, StatsOutput } from '$lib/ctxcn/RelatrClient.js';
 import { serverKeys } from '$lib/query-keys';
+import type { RelatrClient, StatsOutput } from '$lib/ctxcn/RelatrClient';
 
-export function useServerStats(
-	relatrClient: () => RelatrClient | null,
-	serverPubkey: () => string
-) {
+export function useServerStats(relatrClient: RelatrClient | null, serverPubkey: string) {
 	return createQuery<StatsOutput | null>(() => ({
-		queryKey: serverKeys.stats(serverPubkey()),
+		queryKey: serverKeys.stats(serverPubkey),
 		queryFn: async () => {
-			const client = relatrClient();
-			if (!client) return null;
-			return await client.Stats({});
+			if (!relatrClient || !serverPubkey) return null;
+			return await relatrClient?.Stats({});
 		},
-		enabled: !!relatrClient()
+		retry: 1,
+		enabled: !!relatrClient && !!serverPubkey
 	}));
 }

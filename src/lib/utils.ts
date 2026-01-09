@@ -130,3 +130,7 @@ export function clearServerHistory(): void {
 		console.error('Error clearing server history from localStorage:', error);
 	}
 }
+
+export function formatTimestamp(timestamp: number): string {
+	return new Date(timestamp * 1000).toLocaleString();
+}

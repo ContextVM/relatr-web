@@ -1,27 +1,19 @@
 import { createQuery } from '@tanstack/svelte-query';
-import type { Relatr, SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+import type { Relatr, SearchProfilesOutput } from '$lib/ctxcn/RelatrClient';
 import { searchKeys } from '$lib/query-keys';
-
+// TODO: We should use the current relatr server to build the query key so if the server changes, the query will be invalidated
 export function useSearchProfiles(
-	relatrClient: () => Relatr | null,
-	query: () => string,
-	limit?: () => number | undefined,
-	weightingScheme?: () => string | undefined,
-	extendToNostr?: () => boolean | undefined
+	relatrClient: Relatr | null,
+	query: string,
+	limit?: number | undefined,
+	extendToNostr?: boolean | undefined
 ) {
 	return createQuery<SearchProfilesOutput | null>(() => ({
-		queryKey: searchKeys.profiles(query(), limit?.(), weightingScheme?.(), extendToNostr?.()),
+		queryKey: searchKeys.profiles(query, limit, extendToNostr),
 		queryFn: async () => {
-			const client = relatrClient();
-			const searchQuery = query();
-			if (!client || !searchQuery) return null;
-			return await client.SearchProfiles(
-				searchQuery,
-				limit?.(),
-				weightingScheme?.(),
-				extendToNostr?.()
-			);
+			if (!relatrClient || !query) return null;
+			return await relatrClient.SearchProfiles(query, limit, extendToNostr);
 		},
-		enabled: !!relatrClient() && !!query()
+		enabled: !!relatrClient && !!query
 	}));
 }

@@ -1,5 +1,4 @@
 <script lang="ts">
-	import type { RelatrClient } from '$lib/ctxcn/RelatrClient.js';
 	import { Card, CardContent } from '$lib/components/ui/card/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
@@ -12,10 +11,9 @@
 	import { copyToClipboard } from '$lib/utils';
 	import type { ServerHistoryItem } from '$lib/utils';
 	import { useServerStats } from '$lib/queries/server-stats';
+	import { getRelatrClient, getServerPubkey } from '$lib/stores/server-config.svelte';
 
 	let {
-		relatrClient,
-		serverPubkey,
 		serverPubkeyInput = $bindable(),
 		validationError = $bindable(),
 		serverHistory,
@@ -23,8 +21,6 @@
 		onHistoryRemove,
 		onValidate
 	}: {
-		relatrClient: RelatrClient;
-		serverPubkey: string;
 		serverPubkeyInput: string;
 		validationError: string | null;
 		serverHistory: ServerHistoryItem[];
@@ -33,13 +29,12 @@
 		onValidate: () => void;
 	} = $props();
 
+	let relatrClient = $derived(getRelatrClient());
+	let serverPubkey = $derived(getServerPubkey());
 	let isEditing = $state(false);
 
 	// Use query for server stats with automatic caching
-	const serverStatsQuery = useServerStats(
-		() => relatrClient,
-		() => serverPubkey
-	);
+	const serverStatsQuery = $derived(useServerStats(relatrClient, serverPubkey));
 	const stats = $derived(serverStatsQuery.data);
 	const loading = $derived(serverStatsQuery.isLoading);
 	const error = $derived(serverStatsQuery.error ? serverStatsQuery.error.message : null);

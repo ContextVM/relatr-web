@@ -4,90 +4,49 @@
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
-	import { RelatrClient, type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient.js';
+	import { type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient';
 	import { isHexKey } from 'applesauce-core/helpers';
-	import { DEFAULT_SERVER } from '$lib/constants';
+	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
 	import {
-		getServerHistory,
-		addServerToHistory,
-		removeServerFromHistory,
-		type ServerHistoryItem
-	} from '$lib/utils';
-	import { page } from '$app/state';
+		getRelatrClient,
+		getServerPubkey,
+		setServerPubkey
+	} from '$lib/stores/server-config.svelte';
 
 	let searchResults = $state<SearchProfilesOutput | null>(null);
 	let activeTab = $state<'search' | 'trust'>('search');
 	let selectedPubkey = $state('');
 	let serverPubkeyInput = $state('');
-	let serverPubkey = $state('');
-	let relatrClient = $state<RelatrClient | null>(null);
+	let relatrClient = $derived(getRelatrClient());
+	let serverPubkey = $derived(getServerPubkey());
 	let validationError = $state<string | null>(null);
 	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
+
+	// Keep the input seeded from the shared store (store also handles initial `?s=` and history)
+	$effect(() => {
+		if (!serverPubkeyInput) serverPubkeyInput = serverPubkey;
+	});
 
 	function handleProfileClick(pubkey: string) {
 		selectedPubkey = pubkey;
 		activeTab = 'trust';
 	}
 
-	// Reactive query parameter for server configuration
-	let queryServerPubkey = $state(page.url.searchParams.get('s'));
-
-	$effect(() => {
-		// Initialize client if not already done
-		if (!relatrClient) {
-			let initialServerPubkey = DEFAULT_SERVER;
-
-			// Use query parameter if valid, otherwise use default
-			if (queryServerPubkey && isHexKey(queryServerPubkey)) {
-				initialServerPubkey = queryServerPubkey;
-				serverPubkeyInput = queryServerPubkey;
-				serverPubkey = queryServerPubkey;
-			}
-
-			relatrClient = new RelatrClient({ serverPubkey: initialServerPubkey });
-			addServerToHistory(initialServerPubkey);
-			serverHistory = getServerHistory();
-		}
-	});
-
-	// React to changes in query parameter
-	$effect(() => {
-		if (queryServerPubkey && isHexKey(queryServerPubkey) && relatrClient) {
-			// Only switch if the query param is different from current server
-			if (queryServerPubkey !== serverPubkey) {
-				switchToServer(queryServerPubkey);
-			}
-		}
-	});
-
-	/**
-	 * Switch to a new server and update history appropriately
-	 */
-	function switchToServer(newServerPubkey: string) {
-		// Update UI state
-		serverPubkeyInput = newServerPubkey;
-		serverPubkey = newServerPubkey;
-		relatrClient = new RelatrClient({ serverPubkey: newServerPubkey });
-
-		addServerToHistory(newServerPubkey);
-
-		// Refresh history display
-		serverHistory = getServerHistory();
-	}
-
 	function handleServerPubkeyChange() {
-		const trimmedPubkey = serverPubkeyInput.trim();
+		const trimmed = serverPubkeyInput.trim();
 
-		if (trimmedPubkey && !isHexKey(trimmedPubkey)) {
+		if (trimmed && !isHexKey(trimmed)) {
 			validationError = 'Invalid hex public key format';
 			return;
 		}
 
 		validationError = null;
 
-		// Use the new server or default if empty
-		const newServer = trimmedPubkey || DEFAULT_SERVER;
-		switchToServer(newServer);
+		// Empty means "default server" (handled by the store)
+		setServerPubkey(trimmed);
+
+		// Reflect current history
+		serverHistory = getServerHistory();
 	}
 
 	function removeServerFromHistoryHandler(pubkey: string, event: Event) {
@@ -109,8 +68,6 @@
 				<div class="w-full max-w-2xl space-y-6">
 					<!-- Server Status Card -->
 					<ServerStatusCard
-						{relatrClient}
-						serverPubkey={serverPubkey || DEFAULT_SERVER}
 						bind:serverPubkeyInput
 						bind:validationError
 						{serverHistory}
