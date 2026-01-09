@@ -4,7 +4,7 @@
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { Checkbox } from '$lib/components/ui/checkbox/index.js';
 	import { toast } from 'svelte-sonner';
-	import { List, Edit2, Check, Trash2, RefreshCw } from 'lucide-svelte';
+	import { List, Edit2, Check, Trash2 } from 'lucide-svelte';
 	import { getPubkeyDisplay } from '$lib/utils.nostr';
 	import { useUserRelays, useUserTaProviders } from '$lib/queries/nostr';
 	import { usePublishTaProvider } from '$lib/mutations/nostr';
@@ -123,17 +123,6 @@
 			? Array.from(new Set([...selectedProviders, providerPubkey]))
 			: selectedProviders.filter((p) => p !== providerPubkey);
 	}
-
-	function refreshProviders() {
-		userRelaysQuery.refetch();
-		userTaProvidersQuery.refetch();
-	}
-
-	let isLoading = $derived(
-		publishTaProviderMutation.isPending ||
-			userRelaysQuery.isLoading ||
-			userTaProvidersQuery.isLoading
-	);
 </script>
 
 <div class="space-y-4">
@@ -167,16 +156,6 @@
 						{/if}
 					</div>
 					<div class="flex items-center gap-2">
-						<Button
-							onclick={refreshProviders}
-							variant="ghost"
-							size="icon"
-							class="h-7 w-7"
-							disabled={isLoading}
-							title="Refresh providers"
-						>
-							<RefreshCw class="h-3 w-3" />
-						</Button>
 						{#if taProviderTags.length > 0}
 							<Button
 								onclick={() => {
@@ -265,12 +244,9 @@
 						</div>
 					{/if}
 				{:else}
-					<div class="space-y-4 rounded-md border border-dashed p-6 text-center">
+					<div class="roxunded-md space-y-4 border border-dashed p-6 text-center">
 						<div class="space-y-2">
-							<p class="text-sm font-medium">No trusted providers yet</p>
-							<p class="text-sm text-muted-foreground">
-								Your client will ignore Trusted Assertion data until you add at least one provider.
-							</p>
+							<p class="text-lg">No trusted providers yet</p>
 						</div>
 						{#if serverSupportsTa && serverPubkey}
 							<!-- Current server provider row will show add CTA -->
@@ -285,8 +261,15 @@
 							/>
 						{:else}
 							<p class="text-xs text-muted-foreground">
-								This server doesn't support Trusted Assertions. Try a different server or add a
-								provider manually.
+								This server doesn't support Trusted Assertions. Try a different server or find
+								another Trusted Assertions provider.
+							</p>
+							<p class="text-xs text-muted-foreground">
+								Learn more about Trusted Assertions <a
+									href="https://nostrhub.io/naddr1qvzqqqrcvypzq3svyhng9ld8sv44950j957j9vchdktj7cxumsep9mvvjthc2pjuqy28wumn8ghj7un9d3shjtnyv9kh2uewd9hsqyn5wf6hxar9vskkzumnv4e8g6t0deesu5l7ne"
+									target="_blank"
+									class="text-muted-foreground underline">here</a
+								>.
 							</p>
 						{/if}
 					</div>

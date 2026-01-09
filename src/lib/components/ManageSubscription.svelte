@@ -175,7 +175,8 @@
 							Custom Relays (Optional)
 						</label>
 						<p class="text-xs text-muted-foreground">
-							Comma-separated list of relay URLs. Leave empty for defaults.
+							Comma-separated list of relay URLs where assertions will be published. Leave empty for
+							default relays.
 						</p>
 						<input
 							id="custom-relays-input"

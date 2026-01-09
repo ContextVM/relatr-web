@@ -9,11 +9,18 @@
 	} from '$lib/components/ui/card/index.js';
 	import AccountLoginDialog from '$lib/components/AccountLoginDialog.svelte';
 	import UserTaProviders from '$lib/components/UserTaProviders.svelte';
-	import { getServerPubkey, setServerPubkey } from '$lib/stores/server-config.svelte';
-	import { User, Info } from 'lucide-svelte';
+	import {
+		getRelatrClient,
+		getServerPubkey,
+		setServerPubkey
+	} from '$lib/stores/server-config.svelte';
+	import { User, Info, ChevronRight } from 'lucide-svelte';
 	import { isHexKey } from 'applesauce-core/helpers';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
+	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
+	import ChevronDown from '@lucide/svelte/icons/chevron-down';
+	import { getTaCapabilityState, useTaProviderStatus } from '$lib/queries/ta-provider';
 
 	let serverPubkey = $derived(getServerPubkey());
 	let serverPubkeyInput = $state('');
@@ -41,12 +48,24 @@
 		// Reflect current history
 		serverHistory = getServerHistory();
 	}
+	let relatrClient = $derived(getRelatrClient());
+	let currentUserPubkey = $derived($activeAccount?.pubkey);
+
+	// Query for TA provider status
+	const taProviderStatusQuery = $derived(
+		useTaProviderStatus(relatrClient, serverPubkey, currentUserPubkey)
+	);
+
+	// TA capability state: 'unknown' | 'supported' | 'unavailable'
+	let taCapability = $derived(getTaCapabilityState(taProviderStatusQuery));
 
 	function removeServerFromHistoryHandler(pubkey: string, event: Event) {
 		event.stopPropagation();
 		removeServerFromHistory(pubkey);
 		serverHistory = getServerHistory();
 	}
+
+	let open = $state(false);
 
 	function validateInput() {
 		const trimmed = serverPubkeyInput.trim();
@@ -72,10 +91,31 @@
 					<!-- Trusted Assertions Section -->
 					<Card class="py-6">
 						<CardHeader>
-							<CardTitle>Trusted Assertions (NIP-85)</CardTitle>
+							<CardTitle>Trusted Assertions</CardTitle>
 							<CardDescription>
-								Use trusted services to compute metrics (rank, counts, etc.) and publish signed
-								assertions your client can consume.
+								A new emerging standard for Nostr where providers compute metrics (rank, counts,
+								etc.) and publish signed assertions. Add providers to your trusted list so your
+								client can consume them and provide you with a tailored experience. The new version
+								of Relatr now offers trusted assertions features.
+								<Collapsible.Root bind:open class="py-2">
+									<Collapsible.Trigger class="inline-flex w-full items-center"
+										>Discover more
+										{#if open}
+											<ChevronDown class="h-4 w-4 text-muted-foreground" />
+										{:else}
+											<ChevronRight class="h-4 w-4 text-muted-foreground" />
+										{/if}
+									</Collapsible.Trigger>
+									<Collapsible.Content class="mt-2">
+										The new version of Relatr now offers trusted assertions features, becoming the
+										first solution to support the different emerging standards for Web of Trust
+										(WoT) computations, a ContextVM interface (request/response, ideal for real-time
+										computation and filling gaps), and Trusted Assertions (provider/consumer), ideal
+										for Nostr clients to cache ranks and published metrics. This combination offers
+										a versatile interface to meet all needs. Relatr is open source, customizable,
+										and made with love for the free internet.
+									</Collapsible.Content>
+								</Collapsible.Root>
 							</CardDescription>
 						</CardHeader>
 						<CardContent class="space-y-4">
@@ -89,11 +129,14 @@
 											from services listed here.
 											<span class="text-xs">(published in kind 10040)</span>
 										</p>
-										<p>
-											<strong>Enable provider on this server:</strong> Ask the selected Relatr
-											server to publish your assertions to your relays.
-											<span class="text-xs">(kind 30382)</span>
-										</p>
+										{#if serverPubkey && taCapability === 'supported'}
+											<p>
+												<strong>Enable provider on this server:</strong> This Relatr server support
+												Trusted assertions. You can add it to your list and enable the server to
+												publish your assertions to your relays.
+												<span class="text-xs">(kind 30382)</span>
+											</p>
+										{/if}
 									</div>
 								</div>
 							</div>
@@ -124,10 +167,12 @@
 					<!-- Authentication Required Card -->
 					<Card class="py-6">
 						<CardHeader>
-							<CardTitle>Trusted Assertions (NIP-85)</CardTitle>
+							<CardTitle>Trusted Assertions</CardTitle>
 							<CardDescription>
-								Use trusted services to compute metrics (rank, counts, etc.) and publish signed
-								assertions your client can consume.
+								Relatr is one of the first providers to offer trusted assertions—a new emerging
+								standard for nostr where providers compute metrics (rank, counts, etc.) and publish
+								signed assertions. Add providers to your trusted list so your client can consume
+								them and provide you with a tailored experience.
 							</CardDescription>
 						</CardHeader>
 						<CardContent class="space-y-6">

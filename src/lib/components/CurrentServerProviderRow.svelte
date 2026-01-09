@@ -110,7 +110,6 @@
 					<span class="font-mono text-sm text-muted-foreground">
 						{getPubkeyDisplay(serverPubkey)}
 					</span>
-					<Badge variant="default" class="text-xs">Current</Badge>
 					{#if isProviderEnabled}
 						<Badge variant="default" class="text-xs">
 							<CheckCircle class="mr-1 h-3 w-3" />
