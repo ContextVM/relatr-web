@@ -40,14 +40,14 @@
 	});
 
 	function getStatusKey() {
-		return taProviderKeys.status(serverPubkey, subscriptionQuery.data?.subscriberPubkey);
+		return taProviderKeys.status(serverPubkey, subscriptionQuery.data?.pubkey);
 	}
 
 	// Mutations for subscribe/unsubscribe
 	const subscribeMutation = createMutation(() => ({
 		mutationFn: async () => {
 			if (!relatrClient) throw new Error('No client available');
-			return await relatrClient.ManageTaSubscription('subscribe', customRelays || undefined);
+			return await relatrClient.ManageTa('enable', customRelays || undefined);
 		},
 		onSuccess: (result) => {
 			// Optimistically update UI and invalidate in background
@@ -75,7 +75,7 @@
 	const unsubscribeMutation = createMutation(() => ({
 		mutationFn: async () => {
 			if (!relatrClient) throw new Error('No client available');
-			return await relatrClient.ManageTaSubscription('unsubscribe');
+			return await relatrClient.ManageTa('disable');
 		},
 		onSuccess: (result) => {
 			// Optimistically update UI and invalidate in background
@@ -147,8 +147,8 @@
 					: 'Never'}
 			</span>
 			<span>
-				Updated: {subscriptionQuery.data.updatedAt
-					? formatTimestamp(subscriptionQuery.data.updatedAt)
+				Updated: {subscriptionQuery.data.computedAt
+					? formatTimestamp(subscriptionQuery.data.computedAt)
 					: 'Never'}
 			</span>
 		</div>

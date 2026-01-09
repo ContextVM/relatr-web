@@ -1,6 +1,6 @@
 import { createQuery } from '@tanstack/svelte-query';
 import { taProviderKeys } from '$lib/query-keys';
-import type { ManageTaSubscriptionOutput, RelatrClient } from '$lib/ctxcn/RelatrClient';
+import type { ManageTaOutput, RelatrClient } from '$lib/ctxcn/RelatrClient';
 
 function isTransientConnectionClosedError(err: unknown): boolean {
 	const message = err instanceof Error ? err.message : String(err);
@@ -10,7 +10,7 @@ function isTransientConnectionClosedError(err: unknown): boolean {
 /**
  * Represents the capability state of the TA feature on a server.
  * - 'unknown': Still checking or unable to determine (e.g., no client, no pubkey)
- * - 'supported': Server supports TA feature (ManageTaSubscription returned valid data)
+ * - 'supported': Server supports TA feature (ManageTaOutput returned valid data)
  * - 'unavailable': Server is offline, unreachable, or doesn't support TA
  */
 export type TaCapabilityState = 'unknown' | 'supported' | 'unavailable';
@@ -20,11 +20,11 @@ export function useTaProviderStatus(
 	serverPubkey: string,
 	subscriberPubkey: string | undefined
 ) {
-	return createQuery<ManageTaSubscriptionOutput | null>(() => ({
+	return createQuery<ManageTaOutput | null>(() => ({
 		queryKey: taProviderKeys.status(serverPubkey, subscriberPubkey),
 		queryFn: async () => {
 			if (!relatrClient) return null;
-			return await relatrClient.ManageTaSubscription('get');
+			return await relatrClient.ManageTa('get');
 		},
 		enabled: !!relatrClient && !!serverPubkey && !!subscriberPubkey,
 		retry: (failureCount, error) => {

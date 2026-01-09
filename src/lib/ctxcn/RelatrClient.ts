@@ -99,24 +99,24 @@ export interface SearchProfilesOutput {
 	searchTimeMs: number;
 }
 
-export interface ManageTaSubscriptionInput {
+export interface ManageTaInput {
 	/**
-	 * Action to perform: 'get' to check status, 'subscribe' to activate, 'unsubscribe' to deactivate
+	 * Action to perform: 'get' to check status, 'enable' to activate, 'disable' to deactivate
 	 */
-	action: 'get' | 'subscribe' | 'unsubscribe';
+	action: 'get' | 'enable' | 'disable';
 	/**
-	 * Optional comma-separated list of custom relay URLs to publish TA events to (only used for subscribe action)
+	 * Optional comma-separated list of custom relay URLs to publish TA events to (only used for enable action)
 	 */
 	customRelays?: string;
 }
 
-export interface ManageTaSubscriptionOutput {
+export interface ManageTaOutput {
 	success: boolean;
 	message?: string;
-	subscriberPubkey: string;
+	pubkey: string;
 	isActive: boolean;
 	createdAt: number | null;
-	updatedAt: number | null;
+	computedAt: number | null;
 	rank?: {
 		published: boolean;
 		rank: number;
@@ -138,10 +138,7 @@ export type Relatr = {
 		limit?: number,
 		extendToNostr?: boolean
 	) => Promise<SearchProfilesOutput>;
-	ManageTaSubscription: (
-		action: string,
-		customRelays?: string
-	) => Promise<ManageTaSubscriptionOutput>;
+	ManageTa: (action: string, customRelays?: string) => Promise<ManageTaOutput>;
 };
 
 export class RelatrClient implements Relatr {
@@ -239,15 +236,12 @@ export class RelatrClient implements Relatr {
 	}
 
 	/**
-	 * Manage your Trusted Assertions subscription. Check status, subscribe, or unsubscribe from TA services.
-	 * @param {string} action Action to perform: 'get' to check status, 'subscribe' to activate, 'unsubscribe' to deactivate
-	 * @param {string} customRelays [optional] Optional comma-separated list of custom relay URLs to publish TA events to (only used for subscribe action)
-	 * @returns {Promise<ManageTaSubscriptionOutput>} The result of the manage_ta_subscription operation
+	 * Manage your Trusted Assertions. Check status, enable, or disable TA services.
+	 * @param {string} action Action to perform: 'get' to check status, 'enable' to activate, 'disable' to deactivate
+	 * @param {string} customRelays [optional] Optional comma-separated list of custom relay URLs to publish TA events to (only used for enable action)
+	 * @returns {Promise<ManageTaOutput>} The result of the manage_ta operation
 	 */
-	async ManageTaSubscription(
-		action: string,
-		customRelays?: string
-	): Promise<ManageTaSubscriptionOutput> {
-		return this.call('manage_ta_subscription', { action, customRelays });
+	async ManageTa(action: string, customRelays?: string): Promise<ManageTaOutput> {
+		return this.call('manage_ta', { action, customRelays });
 	}
 }
