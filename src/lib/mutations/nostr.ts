@@ -46,7 +46,7 @@ export function usePublishTaProvider() {
 				// Build the TA provider tag for Relatr
 				// Format: ["30382:rank", "<provider-pubkey>", "<relay-url>"]
 				// Prefer publishing relay from the user's write relay list.
-				const publishRelayUrl = String(userRelays ?? relayStore.selectedRelays[0] ?? '');
+				const publishRelayUrl = userRelays?.[0] ?? relayStore.selectedRelays[0] ?? '';
 				const relatrTag = ['30382:rank', serverPubkey, publishRelayUrl];
 
 				// Check if Relatr is already in the list
