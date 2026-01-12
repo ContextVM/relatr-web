@@ -17,6 +17,7 @@
 	import { useTaProviderStatus, getTaCapabilityState } from '$lib/queries/ta-provider';
 	import CurrentServerProviderRow from '$lib/components/CurrentServerProviderRow.svelte';
 	import { taProviderKeys, nostrKeys } from '$lib/query-keys';
+	import { useTrustScore } from '$lib/queries/trust-scores';
 
 	let serverPubkey = $derived(getServerPubkey());
 	let relatrClient = $derived(getRelatrClient());
@@ -45,6 +46,7 @@
 	const taProviderStatusQuery = $derived(
 		useTaProviderStatus(relatrClient, serverPubkey, currentUserPubkey)
 	);
+
 	let taCapability = $derived(getTaCapabilityState(taProviderStatusQuery));
 	let serverSupportsTa = $derived(taCapability === 'supported');
 
@@ -103,6 +105,8 @@
 					toast.success(
 						`Successfully added server to providers (published to ${result.publishedTo.length} relay(s))`
 					);
+
+					useTrustScore(relatrClient, serverPubkey).refetch();
 				},
 				onError: (error) => {
 					toast.error(error instanceof Error ? error.message : 'Failed to add server to providers');

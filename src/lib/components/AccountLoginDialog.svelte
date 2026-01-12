@@ -37,6 +37,7 @@
 			error = '';
 
 			const signer = new ExtensionSigner();
+			console.log('!!!', signer);
 			const pubkey = await signer.getPublicKey();
 			const account = new ExtensionAccount(pubkey, signer);
 

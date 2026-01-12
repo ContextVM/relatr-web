@@ -52,9 +52,9 @@
 		onSuccess: (result) => {
 			// Optimistically update UI and invalidate in background
 			queryClient.setQueryData(getStatusKey(), result);
-			queryClient.invalidateQueries({
-				queryKey: taProviderKeys.status(serverPubkey, $activeAccount?.pubkey)
-			});
+			// queryClient.invalidateQueries({
+			// 	queryKey: taProviderKeys.status(serverPubkey, $activeAccount?.pubkey)
+			// });
 
 			if (result.success) {
 				toast.success('Provider enabled successfully');
@@ -80,9 +80,6 @@
 		onSuccess: (result) => {
 			// Optimistically update UI and invalidate in background
 			queryClient.setQueryData(getStatusKey(), result);
-			queryClient.invalidateQueries({
-				queryKey: taProviderKeys.status(serverPubkey, $activeAccount?.pubkey)
-			});
 
 			if (result.success) {
 				toast.success('Provider disabled successfully');

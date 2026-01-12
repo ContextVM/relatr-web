@@ -82,7 +82,7 @@
 		class="flex items-center justify-between rounded-md border border-blue-600/30 bg-blue-600/10 p-3 transition-colors hover:bg-blue-600/20"
 	>
 		<div class="flex items-center gap-2">
-			<Badge variant="outline" class="font-mono text-xs">30382:</Badge>
+			<Badge variant="outline" class="font-mono text-xs">30382:rank</Badge>
 			<span class="font-mono text-sm text-muted-foreground">
 				{getPubkeyDisplay(serverPubkey)}
 			</span>
@@ -90,11 +90,7 @@
 			<Badge variant="outline" class="text-xs text-blue-600">Not Trusted</Badge>
 		</div>
 		<Button onclick={onAddTrusted} variant="default" size="sm" disabled={isAdding}>
-			{#if isAdding}
-				<Spinner class="mr-2 h-4 w-4" />
-			{:else}
-				<Plus class="mr-2 h-4 w-4" />
-			{/if}
+			<Plus class="mr-2 h-4 w-4" />
 			{isAdding ? 'Adding...' : 'Add'}
 		</Button>
 	</div>
@@ -106,7 +102,7 @@
 				class="flex items-center justify-between rounded-md border bg-muted/30 p-3 transition-colors hover:bg-muted/50"
 			>
 				<div class="flex items-center gap-2">
-					<Badge variant="outline" class="font-mono text-xs">30382:</Badge>
+					<Badge variant="outline" class="font-mono text-xs">30382:rank</Badge>
 					<span class="font-mono text-sm text-muted-foreground">
 						{getPubkeyDisplay(serverPubkey)}
 					</span>
