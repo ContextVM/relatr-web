@@ -6,6 +6,7 @@ import {
 	PrivateKeySigner,
 	ApplesauceRelayPool
 } from '@contextvm/sdk';
+import { defaultRelays } from '$lib/services/relay-pool';
 
 export interface CalculateTrustScoreInput {
 	targetPubkey: string;
@@ -144,7 +145,7 @@ export type Relatr = {
 export class RelatrClient implements Relatr {
 	static readonly SERVER_PUBKEY =
 		'60a6070044e5788bf8a9d4d4e5aaa98a3853eec38c3ecc483ced19800fb6b7b0';
-	static readonly DEFAULT_RELAYS = ['wss://relay.contextvm.org', 'wss://cvm.otherstuff.ai'];
+	static readonly DEFAULT_RELAYS = defaultRelays;
 	private client: Client;
 	private transport: Transport;
 
