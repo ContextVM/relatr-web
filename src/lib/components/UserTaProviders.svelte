@@ -106,7 +106,7 @@
 						`Successfully added server to providers (published to ${result.publishedTo.length} relay(s))`
 					);
 
-					useTrustScore(relatrClient, serverPubkey).refetch();
+					useTrustScore(relatrClient, serverPubkey, currentUserPubkey).refetch();
 				},
 				onError: (error) => {
 					toast.error(error instanceof Error ? error.message : 'Failed to add server to providers');

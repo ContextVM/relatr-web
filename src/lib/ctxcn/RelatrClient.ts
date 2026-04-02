@@ -20,7 +20,10 @@ export interface CalculateTrustScoreOutput {
 		components: {
 			distanceWeight: number;
 			validators: {
-				[k: string]: number;
+				[k: string]: {
+					score: number;
+					description?: string;
+				};
 			};
 			socialDistance: number;
 			normalizedDistance: number;
@@ -45,7 +48,10 @@ export interface CalculateTrustScoresOutput {
 		components: {
 			distanceWeight: number;
 			validators: {
-				[k: string]: number;
+				[k: string]: {
+					score: number;
+					description?: string;
+				};
 			};
 			socialDistance: number;
 			normalizedDistance: number;
@@ -60,6 +66,8 @@ export type StatsInput = Record<string, unknown>;
 export interface StatsOutput {
 	timestamp: number;
 	sourcePubkey: string;
+	relatrVersion: string;
+	isAdmin: boolean;
 	database: {
 		metrics: {
 			totalEntries: number;
@@ -84,7 +92,7 @@ export interface SearchProfilesInput {
 	 */
 	limit?: number;
 	/**
-	 * Whether to extend the search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
+	 * Whether to extend search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
 	 */
 	extendToNostr?: boolean;
 }
@@ -98,6 +106,71 @@ export interface SearchProfilesOutput {
 	}[];
 	totalFound: number;
 	searchTimeMs: number;
+}
+
+export interface PluginsListInput {
+	verbose?: boolean;
+}
+
+export interface PluginsListOutput {
+	plugins: {
+		pluginKey: string;
+		name: string;
+		enabled: boolean;
+		effectiveWeight: number;
+		pubkey?: string;
+		title?: string | null;
+		description?: string | null;
+		versionInfo?: string;
+		defaultWeight?: number | null;
+		installedEventId?: string;
+		createdAt?: number;
+	}[];
+}
+
+export interface PluginsInstallInput {
+	eventId?: string;
+	nevent?: string;
+	relays?: string[];
+	enable?: boolean;
+}
+
+export interface PluginsInstallOutput {
+	pluginKey: string;
+	enabled: boolean;
+}
+
+export interface PluginsConfigInput {
+	/**
+	 * @minItems 1
+	 */
+	changes: [
+		{
+			pluginKey: string;
+			enabled?: boolean;
+			weightOverride?: number;
+		},
+		...{
+			pluginKey: string;
+			enabled?: boolean;
+			weightOverride?: number;
+		}[]
+	];
+}
+
+export interface PluginsConfigOutput {
+	updated: number;
+}
+
+export interface PluginsUninstallInput {
+	/**
+	 * @minItems 1
+	 */
+	pluginKeys: [string, ...string[]];
+}
+
+export interface PluginsUninstallOutput {
+	removed: number;
 }
 
 export interface ManageTaInput {
@@ -139,6 +212,15 @@ export type Relatr = {
 		limit?: number,
 		extendToNostr?: boolean
 	) => Promise<SearchProfilesOutput>;
+	PluginsList: (verbose?: boolean) => Promise<PluginsListOutput>;
+	PluginsInstall: (
+		eventId?: string,
+		nevent?: string,
+		relays?: string[],
+		enable?: boolean
+	) => Promise<PluginsInstallOutput>;
+	PluginsConfig: (changes: object[]) => Promise<PluginsConfigOutput>;
+	PluginsUninstall: (pluginKeys: string[]) => Promise<PluginsUninstallOutput>;
 	ManageTa: (action: string, customRelays?: string) => Promise<ManageTaOutput>;
 };
 
@@ -214,7 +296,7 @@ export class RelatrClient implements Relatr {
 	}
 
 	/**
-	 * Get comprehensive statistics about the Relatr service including database stats, social graph stats, and the source public key
+	 * Get comprehensive statistics about Relatr service including database stats, social graph stats, and source public key
 	 * @returns {Promise<StatsOutput>} The result of the stats operation
 	 */
 	async Stats(args: StatsInput): Promise<StatsOutput> {
@@ -225,7 +307,7 @@ export class RelatrClient implements Relatr {
 	 * Search for Nostr profiles by name/query and return results sorted by trust score. Queries metadata relays and calculates trust scores for each result.
 	 * @param {string} query The query parameter
 	 * @param {number} limit [optional] Maximum number of results to return (default: 20)
-	 * @param {boolean} extendToNostr [optional] Whether to extend the search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
+	 * @param {boolean} extendToNostr [optional] Whether to extend search to Nostr to fill remaining results. Defaults to false. If false, Nostr will only be queried when local DB returns zero results.
 	 * @returns {Promise<SearchProfilesOutput>} The result of the search_profiles operation
 	 */
 	async SearchProfiles(
@@ -237,7 +319,51 @@ export class RelatrClient implements Relatr {
 	}
 
 	/**
-	 * Manage your Trusted Assertions. Check status, enable, or disable TA services.
+	 * List plugin runtime state with concise or verbose metadata
+	 * @param {boolean} verbose [optional] The verbose parameter
+	 * @returns {Promise<PluginsListOutput>} The result of the plugins_list operation
+	 */
+	async PluginsList(verbose?: boolean): Promise<PluginsListOutput> {
+		return this.call('plugins_list', { verbose });
+	}
+
+	/**
+	 * Install a plugin from event id or nevent (admin-only)
+	 * @param {string} eventId [optional] The event id parameter
+	 * @param {string} nevent [optional] The nevent parameter
+	 * @param {string[]} relays [optional] The relays parameter
+	 * @param {boolean} enable [optional] The enable parameter
+	 * @returns {Promise<PluginsInstallOutput>} The result of the plugins_install operation
+	 */
+	async PluginsInstall(
+		eventId?: string,
+		nevent?: string,
+		relays?: string[],
+		enable?: boolean
+	): Promise<PluginsInstallOutput> {
+		return this.call('plugins_install', { eventId, nevent, relays, enable });
+	}
+
+	/**
+	 * Batch configure plugin enablement/weights atomically (admin-only)
+	 * @param {object[]} changes The changes parameter
+	 * @returns {Promise<PluginsConfigOutput>} The result of the plugins_config operation
+	 */
+	async PluginsConfig(changes: object[]): Promise<PluginsConfigOutput> {
+		return this.call('plugins_config', { changes });
+	}
+
+	/**
+	 * Batch uninstall plugins by pluginKey (admin-only)
+	 * @param {string[]} pluginKeys The plugin keys parameter
+	 * @returns {Promise<PluginsUninstallOutput>} The result of the plugins_uninstall operation
+	 */
+	async PluginsUninstall(pluginKeys: string[]): Promise<PluginsUninstallOutput> {
+		return this.call('plugins_uninstall', { pluginKeys });
+	}
+
+	/**
+	 * Manage your Trusted Assertions. Check status, enable, or disable TA entries.
 	 * @param {string} action Action to perform: 'get' to check status, 'enable' to activate, 'disable' to deactivate
 	 * @param {string} customRelays [optional] Optional comma-separated list of custom relay URLs to publish TA events to (only used for enable action)
 	 * @returns {Promise<ManageTaOutput>} The result of the manage_ta operation
