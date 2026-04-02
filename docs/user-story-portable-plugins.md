@@ -76,7 +76,7 @@ if username == '_' then 1.0 else 0.0
 Notes:
 
 - This is intentionally “events-first”: it looks at kind `0` events and extracts the profile.
-- Relatr still owns normalization rules (sorting, bounds, verification flag), per [`plans/elo-plugins-design.md`](plans/elo-plugins-design.md).
+- Relatr still owns normalization rules (sorting, bounds, verification flag), as described in the runtime-focused guidance in [`docs/elo-plugin-writers-guide.md`](docs/elo-plugin-writers-guide.md).
 
 #### A2) Example: Lightning address format (port of [`LightningPlugin.validate()`](src/validators/plugins.ts:102))
 
