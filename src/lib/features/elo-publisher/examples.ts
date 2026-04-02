@@ -11,5 +11,5 @@ export const defaultPluginDescription =
 
 export const defaultPluginTitle = 'Recent note activity';
 export const defaultPluginIdentifier = 'recent_note_activity';
-export const defaultPluginVersion = '^0.1.16';
+export const defaultPluginVersion = '^0.2.0';
 export const defaultPluginWeight = '0.4';
