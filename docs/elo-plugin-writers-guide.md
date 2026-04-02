@@ -6,8 +6,8 @@ This guide is for plugin authors who want to publish portable plugins as Nostr e
 
 Authoritative references:
 
-- [`docs/elo-plugin-capabilities-reference.md`](docs/elo-plugin-capabilities-reference.md)
-- [`docs/user-story-portable-plugins.md`](docs/user-story-portable-plugins.md)
+- [`./elo-plugin-capabilities-reference.md`](./elo-plugin-capabilities-reference.md)
+- [`./user-story-portable-plugins.md`](./user-story-portable-plugins.md)
 - in-app quick docs under `src/lib/content/plugins/docs/`
 
 ---
@@ -240,7 +240,7 @@ These are registered in [`registerBuiltInCapabilities()`](src/capabilities/regis
 
 There is also a `graph.degree` entry in [`CAPABILITY_CATALOG`](src/capabilities/capability-catalog.ts:20), but there is no corresponding built-in registration in [`registerBuiltInCapabilities()`](src/capabilities/registerBuiltInCapabilities.ts:25). Plugin-writer-facing docs should therefore treat it as **not currently available** unless and until the runtime registers it.
 
-For capability-by-capability argument and result guidance, see [`docs/elo-plugin-capabilities-reference.md`](docs/elo-plugin-capabilities-reference.md).
+For capability-by-capability argument and result guidance, see [`./elo-plugin-capabilities-reference.md`](./elo-plugin-capabilities-reference.md).
 
 ---
 
@@ -273,7 +273,7 @@ Example:
 	"content": "plan notes = do 'nostr.query' {...} in ...",
 	"tags": [
 		["n", "activity_notes"],
-		["relatr-version", "^0.2.0"],
+		["relatr-version", "^0.1.16"],
 		["title", "Activity score (notes)"],
 		["description", "Scores higher for more recent notes."]
 	]
@@ -384,6 +384,6 @@ If a plugin behaves unexpectedly:
 
 ## Recommended reading order
 
-1. [`docs/elo-plugin-capabilities-reference.md`](docs/elo-plugin-capabilities-reference.md)
-2. [`docs/user-story-portable-plugins.md`](docs/user-story-portable-plugins.md)
+1. [`./elo-plugin-capabilities-reference.md`](./elo-plugin-capabilities-reference.md)
+2. [`./user-story-portable-plugins.md`](./user-story-portable-plugins.md)
 3. in-app docs in `src/lib/content/plugins/docs/`

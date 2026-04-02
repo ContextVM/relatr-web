@@ -8,7 +8,7 @@ Primary implementation references:
 - [`src/capabilities/registerBuiltInCapabilities.ts`](src/capabilities/registerBuiltInCapabilities.ts:25)
 - [`src/capabilities/CapabilityRegistry.ts`](src/capabilities/CapabilityRegistry.ts:9)
 
-For general plugin-program semantics, see [`docs/elo-plugin-writers-guide.md`](docs/elo-plugin-writers-guide.md).
+For general plugin-program semantics, see [`./elo-plugin-writers-guide.md`](./elo-plugin-writers-guide.md).
 
 ---
 
@@ -471,4 +471,4 @@ Safe default on unavailable graph or error: `[]`
 | `graph.distance_between`      | `{sourcePubkey, targetPubkey}` | `number`                   | `1000`              |
 | `graph.users_within_distance` | `{distance}`                   | `string[]`                 | `[]`                |
 
-The mixed argument conventions are important for plugin authors today: some graph capabilities currently expect arrays while others expect named objects. If these APIs are normalized later, this document should be updated together with [`docs/elo-plugin-writers-guide.md`](docs/elo-plugin-writers-guide.md).
+The mixed argument conventions are important for plugin authors today: some graph capabilities currently expect arrays while others expect named objects. If these APIs are normalized later, this document should be updated together with [`./elo-plugin-writers-guide.md`](./elo-plugin-writers-guide.md).

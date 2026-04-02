@@ -33,7 +33,7 @@ Portable plugins are published as Nostr kind `765` events. The event content is 
 	"content": "plan notes = do 'nostr.query' {...} in ...",
 	"tags": [
 		["n", "activity_notes"],
-		["relatr-version", "^0.2.0"],
+		["relatr-version", "^0.1.16"],
 		["title", "Activity score (notes)"],
 		["description", "Scores higher for more recent notes."],
 		["weight", "0.40"]
@@ -44,7 +44,7 @@ Portable plugins are published as Nostr kind `765` events. The event content is 
 ## Compatibility guidance
 
 - Use a semver range in `relatr-version` that reflects what you tested.
-- Prefer `^0.2.0` for plugins validated against current relatr hosts.
+- Prefer the current publisher default (`^0.1.16`) unless you have validated against a newer host range.
 - If you rely on new capabilities, bump the minimum compatible version.
 
 ## Versioning model
