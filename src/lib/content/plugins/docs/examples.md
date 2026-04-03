@@ -2,6 +2,13 @@
 
 Use these patterns as starting points. They show how portable Elo plugins can combine relay data, graph capabilities, and host-provided resolution helpers.
 
+## Before you copy one
+
+- Keep result handling nullable (`| []`, `| {}`, `| null`).
+- Keep relay queries bounded with explicit `limit`.
+- Guard `_.sourcePubkey` when relationship logic needs a scorer.
+- Change one variable at a time while debugging.
+
 ## Recent note activity
 
 Use `nostr.query` to score a target based on recent note output.

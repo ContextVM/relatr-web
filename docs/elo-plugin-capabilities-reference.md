@@ -8,7 +8,7 @@ Primary implementation references:
 - [`src/capabilities/registerBuiltInCapabilities.ts`](src/capabilities/registerBuiltInCapabilities.ts:25)
 - [`src/capabilities/CapabilityRegistry.ts`](src/capabilities/CapabilityRegistry.ts:9)
 
-For general plugin-program semantics, see [`plans/elo-plugin-writers-guide.md`](plans/elo-plugin-writers-guide.md).
+For general plugin-program semantics, see [`./elo-plugin-writers-guide.md`](./elo-plugin-writers-guide.md).
 
 ---
 
@@ -144,7 +144,7 @@ fetch(res, .pubkey) | null
 
 - Treat the result object itself as nullable in plugin logic, even if the handler often returns an object.
 - Treat `fetch(res, .pubkey) | null` as the canonical read pattern.
-- Use this after fetching a profile event with [`nostr.query`](plans/elo-plugin-capabilities-reference.md) when validating a target's advertised NIP-05.
+- Use this after fetching a profile event with `nostr.query` when validating a target's advertised NIP-05.
 
 Example pattern:
 
@@ -237,7 +237,7 @@ Safe default on unavailable graph or error: `[]`
 
 - This can be large, so use it cautiously.
 - Prefer more targeted graph capabilities when possible.
-- If you only need existence or a relationship check, use [`graph.pubkey_exists`](plans/elo-plugin-capabilities-reference.md) or [`graph.are_mutual`](plans/elo-plugin-capabilities-reference.md) instead.
+- If you only need existence or a relationship check, use `graph.pubkey_exists` or `graph.are_mutual` instead.
 
 ---
 
@@ -309,7 +309,7 @@ Safe default on unavailable graph or error: `false`
 ### Author guidance
 
 - Guard against `_.sourcePubkey == null` before calling or before using the result.
-- Use [`graph.are_mutual`](plans/elo-plugin-capabilities-reference.md) when reciprocity matters more than one-way follow state.
+- Use `graph.are_mutual` when reciprocity matters more than one-way follow state.
 
 ---
 
@@ -471,4 +471,4 @@ Safe default on unavailable graph or error: `[]`
 | `graph.distance_between`      | `{sourcePubkey, targetPubkey}` | `number`                   | `1000`              |
 | `graph.users_within_distance` | `{distance}`                   | `string[]`                 | `[]`                |
 
-The mixed argument conventions are important for plugin authors today: some graph capabilities currently expect arrays while others expect named objects. If these APIs are normalized later, this document should be updated together with [`plans/elo-plugin-writers-guide.md`](plans/elo-plugin-writers-guide.md).
+The mixed argument conventions are important for plugin authors today: some graph capabilities currently expect arrays while others expect named objects. If these APIs are normalized later, this document should be updated together with [`./elo-plugin-writers-guide.md`](./elo-plugin-writers-guide.md).
