@@ -11,12 +11,9 @@ For plugin authors, that means two things:
 
 ## Most important gotcha
 
-Graph capabilities are not yet fully normalized:
+Graph capabilities use object-shaped arguments.
 
-- some expect arrays (`graph.pubkey_exists`, `graph.is_following`)
-- others expect named objects (`graph.are_mutual`, `graph.distance_between`)
-
-Use the exact call shape shown below for each capability.
+Use the exact field names shown below for each capability.
 
 ## Capability summary
 
@@ -26,8 +23,8 @@ Use the exact call shape shown below for each capability.
 | `http.nip05_resolve`          | `{nip05: string}`              | `{pubkey: string \| null}` | `{pubkey: null}`    |
 | `graph.stats`                 | `{}`                           | stats object               | zeroed stats object |
 | `graph.all_pubkeys`           | `{}`                           | `string[]`                 | `[]`                |
-| `graph.pubkey_exists`         | `[pubkey]`                     | `boolean`                  | `false`             |
-| `graph.is_following`          | `[follower, followed]`         | `boolean`                  | `false`             |
+| `graph.pubkey_exists`         | `{pubkey}`                     | `boolean`                  | `false`             |
+| `graph.is_following`          | `{followerPubkey, followedPubkey}` | `boolean`             | `false`             |
 | `graph.are_mutual`            | `{a, b}`                       | `boolean`                  | `false`             |
 | `graph.distance_from_root`    | `{pubkey}`                     | `number`                   | `1000`              |
 | `graph.distance_between`      | `{sourcePubkey, targetPubkey}` | `number`                   | `1000`              |
@@ -36,8 +33,13 @@ Use the exact call shape shown below for each capability.
 ## Quick invocation patterns
 
 ```elo
-plan exists = do 'graph.pubkey_exists' [_.targetPubkey] in
+plan exists = do 'graph.pubkey_exists' {pubkey: _.targetPubkey} in
 exists == true
+```
+
+```elo
+plan follows = do 'graph.is_following' {followerPubkey: _.sourcePubkey, followedPubkey: _.targetPubkey} in
+_.sourcePubkey != null and follows == true
 ```
 
 ```elo
@@ -98,7 +100,7 @@ Return all unique pubkeys in the loaded graph.
 
 Check whether a pubkey exists in the graph.
 
-- Args: `[pubkey]`
+- Args: `{pubkey}`
 - Returns: `boolean`
 - Safe default: `false`
 
@@ -106,7 +108,7 @@ Check whether a pubkey exists in the graph.
 
 Check whether one pubkey directly follows another.
 
-- Args: `[follower, followed]`
+- Args: `{followerPubkey, followedPubkey}`
 - Returns: `boolean`
 - Safe default: `false`
 

@@ -110,7 +110,7 @@ Sometimes a binary signal is enough.
 
 ```elo
 plan
-  exists = do 'graph.pubkey_exists' [_.targetPubkey]
+  exists = do 'graph.pubkey_exists' {pubkey: _.targetPubkey}
 in
 if exists == true then 1.0 else 0.0
 ```
@@ -118,7 +118,7 @@ if exists == true then 1.0 else 0.0
 Why this pattern is useful:
 
 - it is minimal and easy to test
-- it highlights one of the current graph argument-shape quirks
+- it demonstrates the standard object-shaped graph capability call pattern
 - it is a good first plugin when learning the model
 
 ## How to adapt these examples safely
