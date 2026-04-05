@@ -8,7 +8,8 @@ export type MarkdownBlock =
 export type InlineMarkdownToken =
 	| { type: 'text'; value: string }
 	| { type: 'code'; value: string }
-	| { type: 'strong'; value: string };
+	| { type: 'strong'; value: string }
+	| { type: 'link'; label: string; href: string };
 
 export function parseMarkdown(source: string): MarkdownBlock[] {
 	const lines = source.replace(/\r\n/g, '\n').split('\n');
@@ -114,7 +115,7 @@ function splitTableRow(row: string): string[] {
 
 export function parseInlineMarkdown(text: string): InlineMarkdownToken[] {
 	const tokens: InlineMarkdownToken[] = [];
-	const pattern = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+	const pattern = /(\[[^\]]+\]\([^\)]+\)|\*\*[^*]+\*\*|`[^`]+`)/g;
 	let lastIndex = 0;
 
 	for (const match of text.matchAll(pattern)) {
@@ -124,7 +125,14 @@ export function parseInlineMarkdown(text: string): InlineMarkdownToken[] {
 		}
 
 		const value = match[0];
-		if (value.startsWith('**') && value.endsWith('**')) {
+		const linkMatch = value.match(/^\[([^\]]+)\]\(([^\)]+)\)$/);
+		if (linkMatch) {
+			tokens.push({
+				type: 'link',
+				label: linkMatch[1],
+				href: linkMatch[2]
+			});
+		} else if (value.startsWith('**') && value.endsWith('**')) {
 			tokens.push({ type: 'strong', value: value.slice(2, -2) });
 		} else if (value.startsWith('`') && value.endsWith('`')) {
 			tokens.push({ type: 'code', value: value.slice(1, -1) });

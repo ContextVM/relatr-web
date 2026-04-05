@@ -12,6 +12,10 @@
 	} = $props();
 
 	const blocks = $derived(parseMarkdown(source));
+
+	function isExternalHref(href: string) {
+		return /^(https?:)?\/\//.test(href);
+	}
 </script>
 
 <div class={`space-y-6 ${className}`}>
@@ -41,6 +45,15 @@
 						<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.85em]"
 							>{token.value}</code
 						>
+					{:else if token.type === 'link'}
+						<a
+							href={token.href}
+							class="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+							target={isExternalHref(token.href) ? '_blank' : undefined}
+							rel={isExternalHref(token.href) ? 'noreferrer' : undefined}
+						>
+							{token.label}
+						</a>
 					{:else if token.type === 'strong'}
 						<strong class="font-semibold text-foreground">{token.value}</strong>
 					{:else}
@@ -57,6 +70,15 @@
 								<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.85em]"
 									>{token.value}</code
 								>
+							{:else if token.type === 'link'}
+								<a
+									href={token.href}
+									class="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+									target={isExternalHref(token.href) ? '_blank' : undefined}
+									rel={isExternalHref(token.href) ? 'noreferrer' : undefined}
+								>
+									{token.label}
+								</a>
 							{:else if token.type === 'strong'}
 								<strong class="font-semibold text-foreground">{token.value}</strong>
 							{:else}
@@ -88,6 +110,15 @@
 											<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.85em]"
 												>{token.value}</code
 											>
+										{:else if token.type === 'link'}
+											<a
+												href={token.href}
+												class="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+												target={isExternalHref(token.href) ? '_blank' : undefined}
+												rel={isExternalHref(token.href) ? 'noreferrer' : undefined}
+											>
+												{token.label}
+											</a>
 										{:else if token.type === 'strong'}
 											<strong class="font-semibold text-foreground">{token.value}</strong>
 										{:else}
@@ -108,6 +139,15 @@
 												<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.85em]"
 													>{token.value}</code
 												>
+											{:else if token.type === 'link'}
+												<a
+													href={token.href}
+													class="font-medium text-foreground underline underline-offset-4 transition-colors hover:text-primary"
+													target={isExternalHref(token.href) ? '_blank' : undefined}
+													rel={isExternalHref(token.href) ? 'noreferrer' : undefined}
+												>
+													{token.label}
+												</a>
 											{:else if token.type === 'strong'}
 												<strong class="font-semibold text-foreground">{token.value}</strong>
 											{:else}

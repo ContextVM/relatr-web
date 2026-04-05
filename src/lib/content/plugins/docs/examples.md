@@ -1,17 +1,18 @@
 # Plugin examples
 
-Use these patterns as starting points. They show how portable Elo plugins can combine relay data, graph capabilities, and host-provided resolution helpers.
+Use these examples as patterns, not as canonical truth. The point is to show how plugin authors can combine Elo expressions, host capabilities, and safe fallback handling to produce one clear scoring signal at a time.
 
 ## Before you copy one
 
-- Keep result handling nullable (`| []`, `| {}`, `| null`).
+- Keep result handling nullable with `| []`, `| {}`, or `| null`.
 - Keep relay queries bounded with explicit `limit`.
 - Guard `_.sourcePubkey` when relationship logic needs a scorer.
+- Prefer one focused signal per plugin.
 - Change one variable at a time while debugging.
 
 ## Recent note activity
 
-Use `nostr.query` to score a target based on recent note output.
+Use [`nostr.query`](./capabilities) to score a target based on recent note output.
 
 ```elo
 plan
@@ -32,9 +33,15 @@ else if n >= 2 then 0.3
 else 0.0
 ```
 
+Why this pattern is useful:
+
+- it uses one bounded relay query
+- it treats missing results safely
+- it maps an observable behavior into a normalized score
+
 ## NIP-05 validation
 
-Combine metadata lookup with `http.nip05_resolve` in two rounds.
+Combine metadata lookup with [`http.nip05_resolve`](./capabilities) in two rounds.
 
 ```elo
 plan
@@ -50,6 +57,12 @@ else if lower(fetch(nip05_res, .pubkey) | '') == lower(_.targetPubkey) then 1.0
 else 0.0
 ```
 
+Why this pattern is useful:
+
+- it shows why `then` exists
+- it demonstrates capability chaining
+- it keeps all nullable boundaries explicit
+
 ## Reciprocity plus activity
 
 Combine graph and relay signals in one plugin.
@@ -64,3 +77,53 @@ let
 in
 if _.sourcePubkey != null and mutual == true then 1.0 else activity
 ```
+
+Why this pattern is useful:
+
+- it combines graph context with live relay data
+- it preserves a useful fallback when source context is missing
+- it shows how one plugin can blend signals while still staying readable
+
+## Distance-based graph trust
+
+Use graph distance as a simple trust heuristic.
+
+```elo
+plan
+  d = do 'graph.distance_from_root' {pubkey: _.targetPubkey}
+in
+if d <= 1 then 1.0
+else if d <= 2 then 0.7
+else if d <= 4 then 0.3
+else 0.0
+```
+
+Why this pattern is useful:
+
+- it avoids relay access entirely
+- it is easy for operators to understand
+- it demonstrates a plugin based on structural trust rather than activity
+
+## Simple existence guard
+
+Sometimes a binary signal is enough.
+
+```elo
+plan
+  exists = do 'graph.pubkey_exists' [_.targetPubkey]
+in
+if exists == true then 1.0 else 0.0
+```
+
+Why this pattern is useful:
+
+- it is minimal and easy to test
+- it highlights one of the current graph argument-shape quirks
+- it is a good first plugin when learning the model
+
+## How to adapt these examples safely
+
+- change the thresholds before changing the overall structure
+- prefer adding one new capability at a time
+- keep fallback handling in place even if your happy-path data looks reliable
+- if a later step depends on an earlier result, split it into another `then` round

@@ -80,7 +80,6 @@
 		activeTab = 'trust';
 		selectedPubkey = pubkey;
 		void updateUrl((params) => {
-			clearSearchParams(params);
 			params.set('target', pubkey);
 		});
 	}
@@ -119,8 +118,6 @@
 		activeTab = 'trust';
 		selectedPubkey = params.targetPubkey;
 		void updateUrl((searchParams) => {
-			clearSearchParams(searchParams);
-
 			if (params.targetPresent) {
 				searchParams.set('target', params.targetPubkey);
 			} else {

@@ -15,9 +15,9 @@
 			<section class="space-y-4 text-center">
 				<h1 class="text-4xl font-bold tracking-tight">Learn the Elo plugin model</h1>
 				<p class="mx-auto max-w-2xl text-muted-foreground">
-					Elo plugins are portable scoring programs published as Nostr events. Use this docs hub to
-					understand what they are, what capabilities they can call, how they are packaged, and how
-					to start writing one without getting overloaded up front.
+					Elo plugins are portable scoring programs published as Nostr events. This docs hub
+					explains the core Elo mental model, how Relatr weights plugin scores, how to write and
+					validate plugins, and how to publish them from the website or with Relo locally.
 				</p>
 				<div class="flex flex-wrap justify-center gap-3">
 					<Button href="/plugins">Browse marketplace</Button>
@@ -31,7 +31,8 @@
 					<CardHeader>
 						<CardTitle class="text-lg">1. Understand the model</CardTitle>
 						<CardDescription>
-							Start with the basic inputs, scoring model, `plan` rounds, and `do` capability calls.
+							Start with Relatr's plugin mental model, Elo fundamentals, `plan` rounds, and `do`
+							capability calls.
 						</CardDescription>
 					</CardHeader>
 					<CardContent>
@@ -59,7 +60,8 @@
 					<CardHeader>
 						<CardTitle class="text-lg">3. Use the exact reference</CardTitle>
 						<CardDescription>
-							Check capability argument shapes, return values, safe defaults, and packaging rules.
+							Check capability argument shapes, safe defaults, and the portable event packaging
+							rules.
 						</CardDescription>
 					</CardHeader>
 					<CardContent class="space-y-2">
@@ -90,8 +92,15 @@
 						<div>
 							<p class="font-medium text-foreground">I want to write plugins</p>
 							<p>
-								Read the getting-started page first, then the examples, and use the capability
-								reference while implementing real plugin logic.
+								Read the getting-started page first, then the examples, then use the capability
+								reference and publishing guide while building real plugins.
+							</p>
+						</div>
+						<div>
+							<p class="font-medium text-foreground">I want a local authoring workflow</p>
+							<p>
+								Use the getting-started page together with Relo when you want validation, build, and
+								publish commands in local or LLM-assisted workflows.
 							</p>
 						</div>
 					</CardContent>
@@ -113,6 +122,10 @@
 						<p>
 							The final result is a score in the `[0.0, 1.0]` range that Relatr can weight and
 							combine with other signals.
+						</p>
+						<p>
+							Plugins are published as kind `765` Nostr events, which makes them portable,
+							discoverable, and installable across Relatr instances.
 						</p>
 					</CardContent>
 				</Card>

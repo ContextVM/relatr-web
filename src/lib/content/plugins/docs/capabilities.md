@@ -1,6 +1,13 @@
 # Capability reference
 
-This page is the scannable reference for what Elo plugins can call today. The most important detail is that current graph capabilities use mixed argument conventions, so plugin authors should follow each capability's expected shape exactly.
+This page is the scannable reference for what Elo plugins can call today.
+
+The most important principle is that capabilities are host-provided. Elo itself does not define a universal runtime catalog. Relatr decides which capability names exist, what arguments they accept, and what results they return.
+
+For plugin authors, that means two things:
+
+- use only the Relatr capability names documented here
+- follow each argument shape exactly
 
 ## Most important gotcha
 
@@ -48,8 +55,12 @@ if _.sourcePubkey != null and d <= 2 then 1.0 else 0.0
 - list results: `events | []`
 - object results: `obj | {}`
 - optional fields: `fetch(obj, .field) | null`
-- booleans: compare explicitly (`value == true`)
+- booleans: compare explicitly with `== true`
 - distances: treat `1000` as effectively unreachable
+
+## Capability model in one sentence
+
+Think of a capability as a safe host endpoint that a plugin can request during planning, but never implement or execute by itself.
 
 ## `nostr.query`
 
