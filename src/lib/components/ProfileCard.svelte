@@ -26,7 +26,7 @@
 		onClick
 	}: {
 		pubkey: string;
-		mode?: 'minimal' | 'default' | 'detailed' | 'search';
+		mode?: 'minimal' | 'compact' | 'default' | 'detailed' | 'search';
 		trustScore?: number;
 		rank?: number;
 		showPubkey?: boolean;
@@ -56,6 +56,10 @@
 		if (score >= 0.6) return 'text-yellow-600';
 		if (score >= 0.4) return 'text-orange-600';
 		return 'text-red-600';
+	}
+
+	function getCompactPubkey() {
+		return truncatePubkey(encodeNpub(hexPubkey));
 	}
 </script>
 
@@ -108,6 +112,39 @@
 		<div class="flex items-center gap-2">
 			{@render pfp(hexPubkey, $profile?.picture, 'sm')}
 			<span class="max-w-[120px] truncate text-sm font-medium">{getDisplayName()}</span>
+		</div>
+	{/if}
+	<!-- Search mode - compact with trust score -->
+{:else if mode === 'compact'}
+	{#if onClick}
+		<button
+			type="button"
+			class="flex w-full items-center gap-3 border-none bg-transparent p-0 text-left hover:opacity-80"
+			onclick={onClick}
+			onkeydown={(e) => e.key === 'Enter' && onClick()}
+			tabindex="0"
+		>
+			{@render pfp(hexPubkey, $profile?.picture, 'sm')}
+			<div class="min-w-0 flex-1">
+				<div class="truncate text-sm font-medium">{getDisplayName()}</div>
+				{#if $profile?.nip05}
+					<div class="truncate text-xs text-muted-foreground">{$profile?.nip05}</div>
+				{:else if showPubkey}
+					<div class="truncate text-xs text-muted-foreground">{getCompactPubkey()}</div>
+				{/if}
+			</div>
+		</button>
+	{:else}
+		<div class="flex items-center gap-3">
+			{@render pfp(hexPubkey, $profile?.picture, 'sm')}
+			<div class="min-w-0 flex-1">
+				<div class="truncate text-sm font-medium">{getDisplayName()}</div>
+				{#if $profile?.nip05}
+					<div class="truncate text-xs text-muted-foreground">{$profile?.nip05}</div>
+				{:else if showPubkey}
+					<div class="truncate text-xs text-muted-foreground">{getCompactPubkey()}</div>
+				{/if}
+			</div>
 		</div>
 	{/if}
 	<!-- Search mode - compact with trust score -->

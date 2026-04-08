@@ -4,9 +4,12 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import WeightDistribution from '$lib/components/plugins/WeightDistribution.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import { Edit, Users, Link as LinkIcon, Clock, Trash2, Check, X, Copy } from 'lucide-svelte';
 	import { isHexKey } from 'applesauce-core/helpers';
+	import type { PluginsListOutput } from '$lib/ctxcn/RelatrClient';
+	import { usePluginsList } from '$lib/queries/plugins';
 	import { getPubkeyDisplay, pubkeyToHexColor } from '$lib/utils.nostr';
 	import { copyToClipboard } from '$lib/utils';
 	import type { ServerHistoryItem } from '$lib/utils';
@@ -33,11 +36,45 @@
 	let serverPubkey = $derived(getServerPubkey());
 	let isEditing = $state(false);
 
+	type InstalledPlugin = PluginsListOutput['plugins'][number];
+
 	// Use query for server stats with automatic caching
 	const serverStatsQuery = $derived(useServerStats(relatrClient, serverPubkey));
+	const pluginsListQuery = $derived(usePluginsList(relatrClient, serverPubkey));
 	const stats = $derived(serverStatsQuery.data);
 	const loading = $derived(serverStatsQuery.isLoading);
 	const error = $derived(serverStatsQuery.error ? serverStatsQuery.error.message : null);
+	const installedPlugins = $derived(pluginsListQuery.data?.plugins ?? []);
+	const totalInstalledWeight = $derived(
+		installedPlugins.reduce((total, plugin) => total + getWeightValue(plugin), 0)
+	);
+
+	function getWeightValue(plugin: InstalledPlugin): number {
+		return Math.max(plugin.effectiveWeight, 0);
+	}
+
+	function hashString(value: string): string {
+		let hash = 0;
+
+		for (let index = 0; index < value.length; index += 1) {
+			hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+		}
+
+		return hash.toString(16).padStart(8, '0');
+	}
+
+	function getPluginColor(
+		pluginPubkey: string | undefined,
+		pluginName: string | undefined,
+		pluginKey: string
+	): string {
+		const hashInput = `${pluginPubkey || ''}:${pluginName || pluginKey}`;
+		return pubkeyToHexColor(hashString(hashInput));
+	}
+
+	function formatWeightPercentage(weight: number): string {
+		return `${Math.round(Math.max(weight, 0) * 100)}%`;
+	}
 
 	function formatNumber(num: number): string {
 		if (num >= 1000000) {
@@ -70,7 +107,7 @@
 	}
 </script>
 
-<Card class="w-full">
+<Card class="w-full pb-0">
 	<CardContent class="p-3">
 		{#if !isEditing}
 			<!-- Status Mode -->
@@ -142,6 +179,13 @@
 									>{formatNumber(stats.socialGraph.stats.follows)}</span
 								>
 							</div>
+							<div class="flex items-center justify-between gap-2">
+								<div class="flex items-center gap-1">
+									<LinkIcon class="h-3 w-3 text-muted-foreground" />
+									<span class="text-muted-foreground">Version:</span>
+								</div>
+								<span class="font-mono font-medium">{stats.relatrVersion || 'Not declared'}</span>
+							</div>
 						</div>
 					{/if}
 					<Button variant="outline" size="sm" onclick={handleEdit}>
@@ -150,6 +194,20 @@
 					</Button>
 				</div>
 			</div>
+
+			{#if installedPlugins.length > 0}
+				<div class="mt-4 border-t">
+					<WeightDistribution
+						{installedPlugins}
+						{totalInstalledWeight}
+						{getPluginColor}
+						{formatWeightPercentage}
+						compact={true}
+						title="Plugin weight distribution"
+						description="Installed plugin weights for the currently selected server. Expand to inspect how each signal contributes."
+					/>
+				</div>
+			{/if}
 		{:else}
 			<!-- Edit Mode -->
 			<div class="space-y-3">

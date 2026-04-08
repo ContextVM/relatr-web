@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import SearchInput from '$lib/components/SearchInput.svelte';
 	import SearchResults from '$lib/components/SearchResults.svelte';
 	import TrustScoreCalculator from '$lib/components/TrustScoreCalculator.svelte';
@@ -21,15 +24,113 @@
 	let serverPubkey = $derived(getServerPubkey());
 	let validationError = $state<string | null>(null);
 	let serverHistory = $state<ServerHistoryItem[]>(getServerHistory());
+	const urlParams = $derived(page.url.searchParams);
+	const hasTargetParam = $derived(urlParams.has('target'));
+	const hasQueryParam = $derived(urlParams.has('q'));
+	const targetParam = $derived(urlParams.get('target')?.trim() ?? '');
+	const queryParam = $derived(urlParams.get('q')?.trim() ?? '');
+	const limitParam = $derived(Number.parseInt(urlParams.get('limit') ?? '5', 10));
+	const initialLimit = $derived(
+		Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 5
+	);
+	const initialExtendToNostr = $derived(urlParams.get('nostr') === '1');
+
+	function clearSearchParams(searchParams: URLSearchParams) {
+		searchParams.delete('q');
+		searchParams.delete('limit');
+		searchParams.delete('nostr');
+	}
 
 	// Keep the input seeded from the shared store (store also handles initial `?s=` and history)
 	$effect(() => {
 		if (!serverPubkeyInput) serverPubkeyInput = serverPubkey;
 	});
 
+	$effect(() => {
+		activeTab = hasTargetParam ? 'trust' : 'search';
+	});
+
+	$effect(() => {
+		selectedPubkey = targetParam;
+	});
+
+	$effect(() => {
+		if (!hasQueryParam) {
+			searchResults = null;
+		}
+	});
+
+	async function updateUrl(mutator: (params: URLSearchParams) => void) {
+		if (!browser) return;
+
+		const nextUrl = new URL(page.url);
+		mutator(nextUrl.searchParams);
+
+		if (nextUrl.toString() === page.url.toString()) return;
+
+		await goto(`${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`, {
+			replaceState: true,
+			keepFocus: true,
+			noScroll: true,
+			invalidateAll: false
+		});
+	}
+
 	function handleProfileClick(pubkey: string) {
-		selectedPubkey = pubkey;
 		activeTab = 'trust';
+		selectedPubkey = pubkey;
+		void updateUrl((params) => {
+			params.set('target', pubkey);
+		});
+	}
+
+	function handleSearchSubmit(params: {
+		queryPresent: boolean;
+		query: string;
+		limit: number;
+		extendToNostr: boolean;
+	}) {
+		activeTab = 'search';
+		void updateUrl((searchParams) => {
+			if (params.queryPresent) {
+				searchParams.set('q', params.query);
+			} else {
+				searchParams.delete('q');
+			}
+
+			if (params.limit === 5) {
+				searchParams.delete('limit');
+			} else {
+				searchParams.set('limit', String(params.limit));
+			}
+
+			if (params.extendToNostr) {
+				searchParams.set('nostr', '1');
+			} else {
+				searchParams.delete('nostr');
+			}
+
+			searchParams.delete('target');
+		});
+	}
+
+	function handleTrustCalculate(params: { targetPresent: boolean; targetPubkey: string }) {
+		activeTab = 'trust';
+		selectedPubkey = params.targetPubkey;
+		void updateUrl((searchParams) => {
+			if (params.targetPresent) {
+				searchParams.set('target', params.targetPubkey);
+			} else {
+				searchParams.delete('target');
+			}
+		});
+	}
+
+	function handleTrustReset() {
+		activeTab = 'search';
+		void updateUrl((searchParams) => {
+			searchParams.delete('target');
+		});
 	}
 
 	function handleServerPubkeyChange() {
@@ -44,6 +145,13 @@
 
 		// Empty means "default server" (handled by the store)
 		setServerPubkey(trimmed);
+		void updateUrl((searchParams) => {
+			if (trimmed) {
+				searchParams.set('s', trimmed);
+			} else {
+				searchParams.delete('s');
+			}
+		});
 
 		// Reflect current history
 		serverHistory = getServerHistory();
@@ -85,7 +193,15 @@
 
 						<!-- Tab Content -->
 						<TabsContent value="search" class="mt-6 space-y-8">
-							<SearchInput bind:results={searchResults} relatr={relatrClient} />
+							<SearchInput
+								bind:results={searchResults}
+								relatr={relatrClient}
+								{serverPubkey}
+								initialQuery={queryParam}
+								{initialLimit}
+								{initialExtendToNostr}
+								onSearch={handleSearchSubmit}
+							/>
 
 							{#if searchResults}
 								<div class="mt-8">
@@ -95,7 +211,13 @@
 						</TabsContent>
 
 						<TabsContent value="trust" class="mt-6 space-y-8">
-							<TrustScoreCalculator bind:targetPubkey={selectedPubkey} relatr={relatrClient} />
+							<TrustScoreCalculator
+								bind:targetPubkey={selectedPubkey}
+								relatr={relatrClient}
+								{serverPubkey}
+								onCalculate={handleTrustCalculate}
+								onReset={handleTrustReset}
+							/>
 						</TabsContent>
 					</Tabs>
 				</div>

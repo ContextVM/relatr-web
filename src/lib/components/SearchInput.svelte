@@ -10,22 +10,39 @@
 
 	let {
 		results = $bindable<SearchProfilesOutput | null>(null),
-		relatr
+		relatr,
+		serverPubkey,
+		initialQuery = '',
+		initialLimit = 5,
+		initialExtendToNostr = false,
+		onSearch
 	}: {
 		results?: SearchProfilesOutput | null;
 		relatr: Relatr;
+		serverPubkey: string;
+		initialQuery?: string;
+		initialLimit?: number;
+		initialExtendToNostr?: boolean;
+		onSearch: (params: {
+			queryPresent: boolean;
+			query: string;
+			limit: number;
+			extendToNostr: boolean;
+		}) => void;
 	} = $props();
 
-	let query = $state('');
-	let limit = $state(5);
-	let extendToNostr = $state(false);
-	let showAdvancedConfig = $state(false);
-	let searchInputElement = $state<HTMLInputElement | null>(null);
+	let query = $derived(initialQuery);
+	let limit = $derived(initialLimit);
+	let extendToNostr = $derived(initialExtendToNostr);
+	let showAdvancedConfig = $derived(false);
+	let searchInputElement = $derived<HTMLInputElement | null>(null);
 
 	// Use query for search with caching - only trigger on explicit search
-	let searchTrigger = $state<string>('');
+	let searchTrigger = $derived(initialQuery);
 
-	const searchQuery = $derived(useSearchProfiles(relatr, searchTrigger, limit, extendToNostr));
+	const searchQuery = $derived(
+		useSearchProfiles(relatr, serverPubkey, searchTrigger, limit, extendToNostr)
+	);
 	const isLoading = $derived(searchQuery.isLoading);
 	const error = $derived(searchQuery.error ? searchQuery.error.message : null);
 
@@ -42,12 +59,23 @@
 	});
 
 	$effect(() => {
-		console.log($state.snapshot(extendToNostr));
+		query = initialQuery;
+		searchTrigger = initialQuery;
+		limit = initialLimit;
+		extendToNostr = initialExtendToNostr;
 	});
 
 	function handleSearch() {
-		if (!query.trim()) return;
-		searchTrigger = query.trim();
+		const trimmed = query.trim();
+		if (!trimmed) return;
+
+		searchTrigger = trimmed;
+		onSearch({
+			queryPresent: true,
+			query: trimmed,
+			limit,
+			extendToNostr
+		});
 	}
 
 	function toggleAdvancedConfig() {

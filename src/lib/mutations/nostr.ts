@@ -15,7 +15,7 @@ interface PublishTaProviderInput {
 	userPubkey: string;
 	userRelays: string[];
 	existingEvent: NostrEvent | null;
-	providerPubkeysToRemove?: string[];
+	providerTagsToRemove?: string[][];
 }
 
 export interface PublishTaProviderOutput {
@@ -28,7 +28,7 @@ export interface PublishTaProviderOutput {
 export function usePublishTaProvider() {
 	return createMutation<PublishTaProviderOutput, Error, PublishTaProviderInput>(() => ({
 		mutationFn: async (input) => {
-			const { userPubkey, userRelays, existingEvent, providerPubkeysToRemove } = input;
+			const { userPubkey, userRelays, existingEvent, providerTagsToRemove } = input;
 			const serverPubkey = getServerPubkey();
 
 			if (!userPubkey || !userRelays || userRelays.length === 0) {
@@ -39,9 +39,9 @@ export function usePublishTaProvider() {
 			let tags = existingEvent ? [...existingEvent.tags] : [];
 
 			// Handle removal case (single or batch)
-			if (providerPubkeysToRemove && providerPubkeysToRemove.length > 0) {
-				const pubkeysToRemove = new Set(providerPubkeysToRemove);
-				tags = tags.filter((tag) => !(tag[0].startsWith('30382:') && pubkeysToRemove.has(tag[1])));
+			if (providerTagsToRemove && providerTagsToRemove.length > 0) {
+				const tagKeysToRemove = new Set(providerTagsToRemove.map((tag) => JSON.stringify(tag)));
+				tags = tags.filter((tag) => !tagKeysToRemove.has(JSON.stringify(tag)));
 			} else {
 				// Build the TA provider tag for Relatr
 				// Format: ["30382:rank", "<provider-pubkey>", "<relay-url>"]

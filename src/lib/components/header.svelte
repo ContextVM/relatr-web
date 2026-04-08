@@ -33,6 +33,12 @@
 						About
 					</a>
 					<a
+						href="/plugins"
+						class="text-sm text-muted-foreground transition-colors hover:text-foreground"
+					>
+						Plugins
+					</a>
+					<a
 						href="/ta"
 						class="text-sm text-muted-foreground transition-colors hover:text-foreground"
 					>
