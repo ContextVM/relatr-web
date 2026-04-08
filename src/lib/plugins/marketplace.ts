@@ -1,20 +1,24 @@
 import { browser } from '$app/environment';
-import { defaultRelays } from '$lib/services/relay-pool';
+import { commonRelays, defaultRelays } from '$lib/services/relay-pool';
 
 export const DISCOVERY_RELAYS_STORAGE_KEY = 'relatr.plugin.discoveryRelays';
 
+const marketplaceDefaultRelays = parseRelayList([...defaultRelays, ...commonRelays]);
+
 export function loadDiscoveryRelays() {
-	if (!browser) return [...defaultRelays];
+	if (!browser) return [...marketplaceDefaultRelays];
 	const raw = localStorage.getItem(DISCOVERY_RELAYS_STORAGE_KEY);
-	if (!raw) return [...defaultRelays];
+	if (!raw) return [...marketplaceDefaultRelays];
 
 	try {
 		const parsed = JSON.parse(raw);
-		if (!Array.isArray(parsed)) return [...defaultRelays];
+		if (!Array.isArray(parsed)) return [...marketplaceDefaultRelays];
 		const cleaned = parsed.filter((relay): relay is string => typeof relay === 'string' && !!relay);
-		return cleaned.length > 0 ? cleaned : [...defaultRelays];
+		return cleaned.length > 0
+			? parseRelayList([...marketplaceDefaultRelays, ...cleaned])
+			: [...marketplaceDefaultRelays];
 	} catch {
-		return [...defaultRelays];
+		return [...marketplaceDefaultRelays];
 	}
 }
 
