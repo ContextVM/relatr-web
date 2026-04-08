@@ -6,6 +6,7 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
+	import ProfileCard from '$lib/components/ProfileCard.svelte';
 	import { getPluginDetailsHref, getMarketplacePluginName } from '$lib/plugins/marketplace';
 	import type { MarketplacePlugin } from '$lib/queries/plugins';
 
@@ -78,10 +79,16 @@
 			{:else if pluginReference}
 				<div class="rounded-lg border border-border/70 p-4">
 					<div class="flex flex-wrap items-start justify-between gap-3">
-						<div class="space-y-2">
+						<div class="min-w-0 space-y-3">
 							<p class="font-medium">{getMarketplacePluginName(pluginReference)}</p>
-							<div class="flex flex-wrap gap-2">
-								<Badge variant="outline">{pluginReference.authorPubkey}</Badge>
+							<div class="flex flex-wrap items-start gap-2">
+								<div class="min-w-[16rem] rounded-md border border-border/70 px-3 py-2">
+									<ProfileCard
+										pubkey={pluginReference.authorPubkey}
+										mode="compact"
+										showPubkey={true}
+									/>
+								</div>
 								{#if pluginReference.defaultWeight != null}
 									<Badge variant="secondary">
 										Default {formatWeightPercentage(pluginReference.defaultWeight)}
@@ -97,7 +104,7 @@
 						</div>
 					</div>
 					{#if pluginReference.description}
-						<p class="mt-3 text-sm text-muted-foreground">{pluginReference.description}</p>
+						<p class="mt-4 text-sm text-muted-foreground">{pluginReference.description}</p>
 					{/if}
 				</div>
 			{:else}

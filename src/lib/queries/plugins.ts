@@ -5,11 +5,13 @@ import { onlyEvents } from 'applesauce-relay/operators';
 import { decode } from 'nostr-tools/nip19';
 import { pluginKeys } from '$lib/query-keys';
 import { relayPool } from '$lib/services/relay-pool';
-import type { PluginsListOutput, RelatrClient } from '$lib/ctxcn/RelatrClient';
+import type { PluginsListOutput, Relatr } from '$lib/ctxcn/RelatrClient';
 import { encodeNevent } from '$lib/utils.nostr';
 import { isHex } from 'applesauce-core/helpers';
 
 const PLUGIN_EVENT_KIND = 765;
+
+export type InstalledPlugin = PluginsListOutput['plugins'][number];
 
 export type MarketplacePlugin = {
 	pluginKey: string;
@@ -23,6 +25,8 @@ export type MarketplacePlugin = {
 	defaultWeight?: number;
 	createdAt: number;
 	installed: boolean;
+	updateAvailable?: boolean;
+	installedPlugin?: InstalledPlugin;
 	content: string;
 	rawEvent: NostrEvent;
 };
@@ -103,6 +107,30 @@ async function requestRelayPlugins(relays: string[]): Promise<MarketplacePlugin[
 	return mergeMarketplacePlugins(responses.flat());
 }
 
+async function requestRelayPluginVersions(relays: string[]): Promise<MarketplacePlugin[]> {
+	if (relays.length === 0) return [];
+
+	const responses: MarketplacePlugin[][] = [];
+
+	for (const relay of relays) {
+		const events = await firstValueFrom(
+			relayPool.request([relay], { kinds: [PLUGIN_EVENT_KIND], limit: 200 }).pipe(
+				onlyEvents(),
+				toArray(),
+				catchError(() => of([]))
+			)
+		);
+
+		responses.push(
+			events
+				.map((event) => normalizePluginEvent(event, relay))
+				.filter((plugin): plugin is MarketplacePlugin => plugin !== null)
+		);
+	}
+
+	return responses.flat().sort((a, b) => b.createdAt - a.createdAt);
+}
+
 function getReferenceRelays(identifier: string, fallbackRelays: string[]): string[] {
 	try {
 		const decoded = decode(identifier);
@@ -163,7 +191,7 @@ async function requestMarketplacePluginByReference(
 	return null;
 }
 
-export function usePluginsList(relatrClient: RelatrClient | null, serverPubkey: string) {
+export function usePluginsList(relatrClient: Relatr | null, serverPubkey: string) {
 	return createQuery<PluginsListOutput | null>(() => ({
 		queryKey: pluginKeys.list(serverPubkey, true),
 		queryFn: async () => {
@@ -180,6 +208,17 @@ export function useMarketplacePlugins(relays: string[]) {
 		queryKey: pluginKeys.marketplace(relays),
 		queryFn: async () => {
 			return await requestRelayPlugins(relays);
+		},
+		enabled: relays.length > 0,
+		retry: 1
+	}));
+}
+
+export function useMarketplacePluginVersions(relays: string[]) {
+	return createQuery<MarketplacePlugin[]>(() => ({
+		queryKey: [...pluginKeys.marketplace(relays), 'versions'],
+		queryFn: async () => {
+			return await requestRelayPluginVersions(relays);
 		},
 		enabled: relays.length > 0,
 		retry: 1
@@ -208,4 +247,16 @@ export function getInstallInputFromPlugin(plugin: MarketplacePlugin): {
 	} catch {
 		return { eventId: plugin.eventId };
 	}
+}
+
+export function isPluginUpdateAvailable(
+	marketplacePlugin: Pick<MarketplacePlugin, 'eventId' | 'createdAt'>,
+	installedPlugin: Pick<InstalledPlugin, 'installedEventId' | 'createdAt'> | null | undefined
+): boolean {
+	if (!installedPlugin?.installedEventId || installedPlugin.createdAt == null) return false;
+
+	return (
+		installedPlugin.installedEventId !== marketplacePlugin.eventId &&
+		marketplacePlugin.createdAt > installedPlugin.createdAt
+	);
 }

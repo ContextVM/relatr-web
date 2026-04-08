@@ -31,11 +31,23 @@
 </script>
 
 <Card class="border-border/70">
-	<CardContent class="flex flex-col gap-4 py-6">
+	<CardContent class="flex flex-col gap-5 p-4 sm:p-6">
 		<div class="space-y-3">
-			<p class="font-medium">
-				{plugin.title || plugin.name || plugin.pluginKey}
-			</p>
+			<div class="flex flex-wrap items-start justify-between gap-3">
+				<p class="font-medium">
+					{plugin.title || plugin.name || plugin.pluginKey}
+				</p>
+				<div class="flex flex-wrap gap-2 text-xs text-muted-foreground">
+					<span
+						class={`rounded-full px-2 py-1 ${plugin.enabled ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}
+					>
+						{plugin.enabled ? 'Enabled' : 'Disabled'}
+					</span>
+					{#if plugin.versionInfo}
+						<span class="rounded-full bg-muted px-2 py-1">Version {plugin.versionInfo}</span>
+					{/if}
+				</div>
+			</div>
 			<p class="text-sm text-muted-foreground">
 				{plugin.description || plugin.pluginKey}
 			</p>
@@ -43,8 +55,11 @@
 				{#if plugin.defaultWeight != null}
 					<span>Default: {formatWeightPercentage(plugin.defaultWeight)}</span>
 				{/if}
-				{#if plugin.versionInfo}
-					<span>Version: {plugin.versionInfo}</span>
+				{#if plugin.createdAt != null}
+					<span>Published: {new Date(plugin.createdAt * 1000).toLocaleString()}</span>
+				{/if}
+				{#if plugin.installedEventId}
+					<span class="break-all">Event: {plugin.installedEventId}</span>
 				{/if}
 			</div>
 		</div>

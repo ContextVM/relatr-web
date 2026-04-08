@@ -17,18 +17,18 @@ Use the exact field names shown below for each capability.
 
 ## Capability summary
 
-| Capability                    | Args                           | Returns                    | Safe default        |
-| ----------------------------- | ------------------------------ | -------------------------- | ------------------- |
-| `nostr.query`                 | object filter                  | list of events             | `[]`                |
-| `http.nip05_resolve`          | `{nip05: string}`              | `{pubkey: string \| null}` | `{pubkey: null}`    |
-| `graph.stats`                 | `{}`                           | stats object               | zeroed stats object |
-| `graph.all_pubkeys`           | `{}`                           | `string[]`                 | `[]`                |
-| `graph.pubkey_exists`         | `{pubkey}`                     | `boolean`                  | `false`             |
-| `graph.is_following`          | `{followerPubkey, followedPubkey}` | `boolean`             | `false`             |
-| `graph.are_mutual`            | `{a, b}`                       | `boolean`                  | `false`             |
-| `graph.distance_from_root`    | `{pubkey}`                     | `number`                   | `1000`              |
-| `graph.distance_between`      | `{sourcePubkey, targetPubkey}` | `number`                   | `1000`              |
-| `graph.users_within_distance` | `{distance}`                   | `string[]`                 | `[]`                |
+| Capability                    | Args                               | Returns                    | Safe default        |
+| ----------------------------- | ---------------------------------- | -------------------------- | ------------------- |
+| `nostr.query`                 | object filter                      | list of events             | `[]`                |
+| `http.nip05_resolve`          | `{nip05: string}`                  | `{pubkey: string \| null}` | `{pubkey: null}`    |
+| `graph.stats`                 | `{}`                               | stats object               | zeroed stats object |
+| `graph.all_pubkeys`           | `{}`                               | `string[]`                 | `[]`                |
+| `graph.pubkey_exists`         | `{pubkey}`                         | `boolean`                  | `false`             |
+| `graph.is_following`          | `{followerPubkey, followedPubkey}` | `boolean`                  | `false`             |
+| `graph.are_mutual`            | `{a, b}`                           | `boolean`                  | `false`             |
+| `graph.distance_from_root`    | `{pubkey}`                         | `number`                   | `1000`              |
+| `graph.distance_between`      | `{sourcePubkey, targetPubkey}`     | `number`                   | `1000`              |
+| `graph.users_within_distance` | `{distance}`                       | `string[]`                 | `[]`                |
 
 ## Quick invocation patterns
 

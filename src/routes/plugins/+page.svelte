@@ -26,6 +26,7 @@
 	import {
 		useMarketplacePlugins,
 		useMarketplacePluginByReference,
+		isPluginUpdateAvailable,
 		usePluginsList,
 		type MarketplacePlugin
 	} from '$lib/queries/plugins';
@@ -96,12 +97,16 @@
 	const filteredMarketplacePlugins = $derived.by(() => {
 		const query = searchQuery.trim().toLowerCase();
 		const plugins = marketplaceQuery.data ?? [];
-		const installedSet = new Set(
-			(pluginsListQuery.data?.plugins ?? []).map((p: InstalledPlugin) => p.pluginKey)
+		const installedMap = new Map(
+			(pluginsListQuery.data?.plugins ?? []).map((p: InstalledPlugin) => [p.pluginKey, p])
 		);
 		const mapped = plugins.map((plugin) => ({
 			...plugin,
-			installed: isAdmin ? installedSet.has(plugin.pluginKey) : false
+			installed: isAdmin ? installedMap.has(plugin.pluginKey) : false,
+			installedPlugin: isAdmin ? installedMap.get(plugin.pluginKey) : undefined,
+			updateAvailable: isAdmin
+				? isPluginUpdateAvailable(plugin, installedMap.get(plugin.pluginKey))
+				: false
 		}));
 
 		if (!query) return mapped;
@@ -207,13 +212,14 @@
 		}
 
 		try {
+			const isUpdate = isPluginUpdateAvailable(plugin, plugin.installedPlugin);
 			const result = await installPluginMutation.mutateAsync({
 				relatrClient,
 				serverPubkey,
 				plugin,
 				enable: true
 			});
-			toast.success(`Installed plugin ${result.pluginKey}`);
+			toast.success(`${isUpdate ? 'Updated' : 'Installed'} plugin ${result.pluginKey}`);
 			activeTab = 'admin';
 		} catch (error) {
 			toast.error(error instanceof Error ? error.message : 'Failed to install plugin');

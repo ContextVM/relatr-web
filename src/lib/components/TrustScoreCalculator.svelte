@@ -6,9 +6,10 @@
 	import Spinner from './ui/spinner/spinner.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import TrustScoreDisplay from './TrustScoreDisplay.svelte';
-	import type { Relatr } from '$lib/ctxcn/RelatrClient';
+	import type { PluginsListOutput, Relatr } from '$lib/ctxcn/RelatrClient';
 	import { X } from 'lucide-svelte';
 	import { validateAndDecodePubkey } from '$lib/utils.nostr';
+	import { usePluginsList } from '$lib/queries/plugins';
 	import { useTrustScore } from '$lib/queries/trust-scores';
 	import { encodePluginRouteId } from '$lib/plugins/marketplace';
 
@@ -30,9 +31,16 @@
 
 	// Use query for trust score with automatic caching
 	const trustScoreQuery = $derived(useTrustScore(relatr, serverPubkey, targetPubkey));
+	const pluginsListQuery = $derived(usePluginsList(relatr, serverPubkey));
 	const result = $derived(trustScoreQuery.data);
 	const isLoading = $derived(trustScoreQuery.isLoading);
 	const error = $derived(trustScoreQuery.error ? trustScoreQuery.error.message : null);
+	const installedPluginsByKey = $derived.by(() => {
+		const plugins = (pluginsListQuery.data?.plugins ?? []) as PluginsListOutput['plugins'];
+		return new Map(
+			plugins.map((plugin) => [plugin.pluginKey, plugin.title || plugin.name || plugin.pluginKey])
+		);
+	});
 
 	$effect(() => {
 		draftTargetPubkey = targetPubkey;
@@ -59,7 +67,7 @@
 	}
 
 	function getValidatorLabel(validatorKey: string) {
-		return validatorKey.split(':')[1] || validatorKey;
+		return installedPluginsByKey.get(validatorKey) || validatorKey.split(':')[1] || validatorKey;
 	}
 
 	function getValidatorPluginHref(validatorKey: string) {
@@ -197,10 +205,10 @@
 				</CardHeader>
 				<CardContent>
 					{#if Object.keys(result.trustScore.components.validators).length > 0}
-						<div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+						<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 							{#each Object.entries(result.trustScore.components.validators) as [validatorKey, validatorValue] (validatorKey + validatorValue)}
 								{@const pluginHref = getValidatorPluginHref(validatorKey)}
-								<div class="rounded-lg border border-border/70 bg-card/60 p-4 text-left shadow-sm">
+								<div class="rounded-lg border border-border/70 bg-card p-4 text-left shadow-sm">
 									<div class="flex items-start justify-between gap-3">
 										<div class="min-w-0 space-y-1">
 											<p class="truncate text-sm font-semibold">

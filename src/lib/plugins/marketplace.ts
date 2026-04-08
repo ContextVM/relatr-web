@@ -117,8 +117,14 @@ export function getPluginDetailsHref(plugin: {
 	n?: string;
 	title?: string;
 	pluginKey: string;
+	eventId?: string;
 }) {
-	return `/plugins/${encodePluginRouteId(plugin.authorPubkey, getMarketplacePluginName(plugin))}`;
+	const basePath = `/plugins/${encodePluginRouteId(plugin.authorPubkey, getMarketplacePluginName(plugin))}`;
+
+	if (!plugin.eventId) return basePath;
+
+	const params = new URLSearchParams({ version: plugin.eventId });
+	return `${basePath}?${params.toString()}`;
 }
 
 export function getAuthorDetailsHref(authorPubkey: string) {

@@ -12,7 +12,8 @@
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import type { MarketplacePlugin } from '$lib/queries/plugins';
 	import { getAuthorDetailsHref, getPluginDetailsHref } from '$lib/plugins/marketplace';
-	import { getEventDisplay, getPubkeyDisplay } from '$lib/utils.nostr';
+	import { getEventDisplay } from '$lib/utils.nostr';
+	import ProfileCard from '$lib/components/ProfileCard.svelte';
 	import Badge from '../ui/badge/badge.svelte';
 
 	let { plugin, isAdmin, isInstalling, onInstall, formatWeightPercentage } = $props<{
@@ -27,8 +28,8 @@
 	const authorDetailsHref = $derived(getAuthorDetailsHref(plugin.authorPubkey));
 </script>
 
-<Card class="py-3 transition-colors hover:border-border">
-	<CardHeader class="space-y-2">
+<Card class="transition-colors hover:border-border">
+	<CardHeader class="space-y-3 pb-3">
 		<div class="flex items-start justify-between gap-4">
 			<div class="space-y-1">
 				<CardTitle class="text-base">{plugin.title || plugin.pluginKey}</CardTitle>
@@ -36,7 +37,7 @@
 			</div>
 		</div>
 	</CardHeader>
-	<CardContent class="space-y-3 text-sm">
+	<CardContent class="space-y-4 pt-0 text-sm">
 		<Collapsible.Root bind:open={isOpen} class="space-y-2">
 			<div class="flex items-center justify-between">
 				<span class="text-xs font-medium text-muted-foreground">Plugin Details</span>
@@ -57,8 +58,13 @@
 				</div>
 			</div>
 
-			<div class="grid gap-1 text-xs text-muted-foreground">
+			<div class="grid gap-2 text-xs text-muted-foreground">
 				<Badge variant="secondary">{plugin.n || 'Unnamed plugin'}</Badge>
+				{#if plugin.updateAvailable}
+					<Badge variant="outline">Update available</Badge>
+				{:else if plugin.installed}
+					<Badge variant="outline">Installed</Badge>
+				{/if}
 				{#if plugin.defaultWeight != null}
 					<p>
 						<span class="font-medium text-foreground">Suggested weight:</span>
@@ -67,13 +73,17 @@
 				{/if}
 			</div>
 
-			<Collapsible.Content class="space-y-2 pt-1">
-				<div class="grid gap-1 border-t pt-2 text-xs text-muted-foreground">
-					<p>
-						<span class="font-medium text-foreground">Author:</span>
-						{getPubkeyDisplay(plugin.authorPubkey)}
-						<a class="underline underline-offset-4" href={authorDetailsHref}>View all plugins</a>
-					</p>
+			<Collapsible.Content class="space-y-3 pt-1">
+				<div class="grid gap-3 border-t pt-3 text-xs text-muted-foreground">
+					<div class="space-y-1">
+						<span class="font-medium text-foreground">Author</span>
+						<a class="block" href={authorDetailsHref}>
+							<ProfileCard pubkey={plugin.authorPubkey} mode="compact" showPubkey={true} />
+						</a>
+						<a class="inline-flex text-xs underline underline-offset-4" href={authorDetailsHref}
+							>View all plugins</a
+						>
+					</div>
 					<p>
 						<span class="font-medium text-foreground">Event:</span>
 						{getEventDisplay(plugin.eventId)}
@@ -86,16 +96,20 @@
 				<p>
 					<span class="font-medium text-foreground">Plugin content:</span>
 				</p>
-				<div class=" bg-secondary p-2">
-					<code>
+				<div class="overflow-x-auto rounded-md bg-secondary p-3">
+					<code class="text-xs">
 						{plugin.content}
 					</code>
 				</div>
 			</Collapsible.Content>
 		</Collapsible.Root>
 
-		{#if isAdmin && plugin.installed}
-			<Button class="w-full" disabled>Already installed</Button>
+		{#if isAdmin && plugin.updateAvailable}
+			<Button class="w-full" disabled={isInstalling} onclick={() => onInstall(plugin)}>
+				Update plugin
+			</Button>
+		{:else if isAdmin && plugin.installed}
+			<Button class="w-full" disabled>Installed</Button>
 		{:else if isAdmin}
 			<Button class="w-full" disabled={isInstalling} onclick={() => onInstall(plugin)}>
 				Install plugin

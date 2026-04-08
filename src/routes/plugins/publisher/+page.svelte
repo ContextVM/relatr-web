@@ -5,6 +5,7 @@
 	import { toast } from 'svelte-sonner';
 	import { activeAccount } from '$lib/services/accountManager.svelte';
 	import AccountLoginDialog from '$lib/components/AccountLoginDialog.svelte';
+	import ProfileCard from '$lib/components/ProfileCard.svelte';
 	import { useUserRelays } from '$lib/queries/nostr';
 	import { loadDiscoveryRelays, parseRelayList } from '$lib/plugins/marketplace';
 	import { createPublisherState } from '$lib/features/elo-publisher/publisher-state.svelte';
@@ -448,7 +449,8 @@
 
 						{#if $activeAccount}
 							<div class="rounded-lg border bg-muted/20 p-4 text-sm text-muted-foreground">
-								Publishing as <span class="font-mono text-foreground">{$activeAccount.pubkey}</span>
+								<p class="mb-3 font-medium text-foreground">Publishing as</p>
+								<ProfileCard pubkey={$activeAccount.pubkey} mode="compact" showPubkey={true} />
 							</div>
 						{:else}
 							<div class="rounded-lg border bg-muted/20 p-6 text-center">
