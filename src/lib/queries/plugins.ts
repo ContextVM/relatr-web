@@ -83,6 +83,24 @@ function mergeMarketplacePlugins(events: MarketplacePlugin[]): MarketplacePlugin
 	return Array.from(merged.values()).sort((a, b) => b.createdAt - a.createdAt);
 }
 
+function dedupeMarketplacePluginVersions(events: MarketplacePlugin[]): MarketplacePlugin[] {
+	const merged = new Map<string, MarketplacePlugin>();
+
+	for (const plugin of events) {
+		const existing = merged.get(plugin.eventId);
+
+		if (!existing) {
+			merged.set(plugin.eventId, plugin);
+			continue;
+		}
+
+		const preferred = plugin.nevent.length >= existing.nevent.length ? plugin : existing;
+		merged.set(plugin.eventId, preferred);
+	}
+
+	return Array.from(merged.values()).sort((a, b) => b.createdAt - a.createdAt);
+}
+
 async function requestRelayPlugins(relays: string[]): Promise<MarketplacePlugin[]> {
 	if (relays.length === 0) return [];
 
@@ -128,7 +146,7 @@ async function requestRelayPluginVersions(relays: string[]): Promise<Marketplace
 		);
 	}
 
-	return responses.flat().sort((a, b) => b.createdAt - a.createdAt);
+	return dedupeMarketplacePluginVersions(responses.flat());
 }
 
 function getReferenceRelays(identifier: string, fallbackRelays: string[]): string[] {

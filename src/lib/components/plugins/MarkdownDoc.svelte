@@ -63,9 +63,9 @@
 			</p>
 		{:else if block.type === 'list'}
 			<ul class="list-disc space-y-2 pl-6 text-muted-foreground">
-				{#each block.items as item (`${item}`)}
+				{#each block.items as item, itemIndex (`${itemIndex}`)}
 					<li>
-						{#each parseInlineMarkdown(item) as token, tokenIndex (`${item}-${tokenIndex}`)}
+						{#each parseInlineMarkdown(item) as token, tokenIndex (tokenIndex)}
 							{#if token.type === 'code'}
 								<code class="rounded bg-secondary px-1.5 py-0.5 font-mono text-[0.85em]"
 									>{token.value}</code
