@@ -31,7 +31,7 @@
 	const publishTaProviderMutation = usePublishTaProvider();
 
 	let isEditMode = $state(false);
-	// Selection state (array is easiest to make reactive in Svelte)
+	// Selection state keyed by full provider tag so duplicate provider pubkeys across subjects remain distinct
 	let selectedProviders = $state<string[]>([]);
 
 	// Get all TA provider tags
@@ -51,7 +51,15 @@
 	let serverSupportsTa = $derived(taCapability === 'supported');
 
 	// Check if current server is in user's TA providers list
-	let relatrInTaProviders = $derived(taProviderTags.some((tag) => tag[1] === serverPubkey));
+	let relatrInTaProviders = $derived(
+		taProviderTags.some((tag) => tag[0] === '30382:rank' && tag[1] === serverPubkey)
+	);
+
+	let currentServerRankTag = $derived(
+		serverPubkey
+			? (taProviderTags.find((tag) => tag[0] === '30382:rank' && tag[1] === serverPubkey) ?? null)
+			: null
+	);
 
 	function removeSelectedProviders() {
 		if (!currentUserPubkey || selectedProviders.length === 0) return;
@@ -62,7 +70,7 @@
 				userPubkey: currentUserPubkey,
 				userRelays: relaySet([...(userRelaysQuery.data?.relays ?? []), ...extraRelays]),
 				existingEvent: userTaProvidersQuery.data || null,
-				providerPubkeysToRemove: selectedProviders
+				providerTagsToRemove: selectedProviderTags
 			},
 			{
 				onSuccess: (result) => {
@@ -71,7 +79,7 @@
 					queryClient.invalidateQueries({ queryKey: taProviderKeys.all });
 
 					toast.success(
-						`Successfully removed ${selectedProviders.length} provider(s) (published to ${result.publishedTo.length} relay(s))`
+						`Successfully removed ${selectedProviderTags.length} provider(s) (published to ${result.publishedTo.length} relay(s))`
 					);
 					selectedProviders = [];
 					isEditMode = false;
@@ -121,12 +129,22 @@
 		queryClient.invalidateQueries({ queryKey: nostrKeys.taProviders(currentUserPubkey) });
 	}
 
-	function setProviderSelected(providerPubkey: string, checked: boolean) {
+	function getProviderSelectionKey(tag: string[]) {
+		return JSON.stringify(tag);
+	}
+
+	function setProviderSelected(providerTag: string[], checked: boolean) {
+		const selectionKey = getProviderSelectionKey(providerTag);
+
 		// Single assignment keeps updates predictable with Bits UI controlled checkbox
 		selectedProviders = checked
-			? Array.from(new Set([...selectedProviders, providerPubkey]))
-			: selectedProviders.filter((p) => p !== providerPubkey);
+			? Array.from(new Set([...selectedProviders, selectionKey]))
+			: selectedProviders.filter((provider) => provider !== selectionKey);
 	}
+
+	let selectedProviderTags = $derived(
+		taProviderTags.filter((tag) => selectedProviders.includes(getProviderSelectionKey(tag)))
+	);
 </script>
 
 <div class="space-y-4">
@@ -190,18 +208,24 @@
 								onAddTrusted={addCurrentServerToProviders}
 								onAfterProviderEnablementChange={handleAfterProviderEnablementChange}
 								{isEditMode}
-								isSelected={selectedProviders.includes(serverPubkey)}
-								onSetSelected={(checked) => setProviderSelected(serverPubkey, checked)}
+								isSelected={currentServerRankTag
+									? selectedProviders.includes(getProviderSelectionKey(currentServerRankTag))
+									: false}
+								onSetSelected={(checked) => {
+									if (currentServerRankTag) {
+										setProviderSelected(currentServerRankTag, checked);
+									}
+								}}
 								isAdding={publishTaProviderMutation.isPending}
 							/>
 						{/if}
 
 						<!-- Other provider rows -->
-						{#each taProviderTags.filter((tag) => tag[1] !== serverPubkey) as tag (tag[1])}
+						{#each taProviderTags.filter((tag) => !(tag[0] === '30382:rank' && tag[1] === serverPubkey)) as tag (`${tag[0]}:${tag[1]}:${tag[2] ?? ''}`)}
 							{@const providerPubkey = tag[1]}
-							{@const getChecked = () => selectedProviders.includes(providerPubkey)}
-							{@const setChecked = (checked: boolean) =>
-								setProviderSelected(providerPubkey, checked)}
+							{@const selectionKey = getProviderSelectionKey(tag)}
+							{@const getChecked = () => selectedProviders.includes(selectionKey)}
+							{@const setChecked = (checked: boolean) => setProviderSelected(tag, checked)}
 							<div class="flex items-center justify-between rounded-md bg-muted/30 p-3">
 								<div class="flex items-center gap-2">
 									<Badge variant="outline" class="font-mono text-xs">
@@ -235,7 +259,7 @@
 								{:else}
 									<Trash2 class="mr-2 h-4 w-4" />
 								{/if}
-								Remove Selected ({selectedProviders.length})
+								Remove Selected ({selectedProviderTags.length})
 							</Button>
 							<Button
 								onclick={() => (selectedProviders = [])}
@@ -259,8 +283,14 @@
 								onAddTrusted={addCurrentServerToProviders}
 								onAfterProviderEnablementChange={handleAfterProviderEnablementChange}
 								{isEditMode}
-								isSelected={selectedProviders.includes(serverPubkey)}
-								onSetSelected={(checked) => setProviderSelected(serverPubkey, checked)}
+								isSelected={currentServerRankTag
+									? selectedProviders.includes(getProviderSelectionKey(currentServerRankTag))
+									: false}
+								onSetSelected={(checked) => {
+									if (currentServerRankTag) {
+										setProviderSelected(currentServerRankTag, checked);
+									}
+								}}
 								isAdding={publishTaProviderMutation.isPending}
 							/>
 						{:else}
