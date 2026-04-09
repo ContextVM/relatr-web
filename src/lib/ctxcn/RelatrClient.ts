@@ -249,7 +249,8 @@ export class RelatrClient implements Relatr {
 		// Use options.relayHandler if provided, otherwise create from relays
 		const relayHandler = options.relayHandler || new ApplesauceRelayPool(relays);
 		const serverPubkey = options.serverPubkey;
-		const { privateKey: _, ...rest } = options;
+		const rest = { ...options };
+		delete rest.privateKey;
 
 		this.transport = new NostrClientTransport({
 			serverPubkey: serverPubkey || RelatrClient.SERVER_PUBKEY,

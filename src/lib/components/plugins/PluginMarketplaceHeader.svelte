@@ -1,12 +1,5 @@
 <script lang="ts">
-	import { Badge } from '$lib/components/ui/badge/index.js';
-	import {
-		Card,
-		CardContent,
-		CardDescription,
-		CardHeader,
-		CardTitle
-	} from '$lib/components/ui/card/index.js';
+	import { Card, CardDescription, CardHeader, CardTitle } from '$lib/components/ui/card/index.js';
 </script>
 
 <Card class="border-border/70 bg-card/80 py-4">

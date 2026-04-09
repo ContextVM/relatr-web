@@ -92,6 +92,17 @@
 		lastValidatedAt = null;
 	}
 
+	function collectDraftValidationDependencies() {
+		return [
+			draft.title,
+			draft.identifier,
+			draft.description,
+			draft.version,
+			draft.weight,
+			draft.source
+		];
+	}
+
 	function validateDraft({ notify = false }: { notify?: boolean } = {}) {
 		const manifestDiagnostics = validatePluginManifest(draft);
 		const sourceResult = validatePluginSource(draft.source);
@@ -187,12 +198,7 @@
 	$effect(() => {
 		if (!browser) return;
 
-		draft.title;
-		draft.identifier;
-		draft.description;
-		draft.version;
-		draft.weight;
-		draft.source;
+		collectDraftValidationDependencies();
 
 		resetValidationState();
 
