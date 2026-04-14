@@ -62,7 +62,7 @@
 			</div>
 
 			<div class="flex flex-wrap gap-2">
-				{#each discoveryRelays.slice(0, 3) as relay}
+				{#each discoveryRelays.slice(0, 3) as relay (relay)}
 					<Badge variant="secondary" class="max-w-[200px] truncate">{relay}</Badge>
 				{/each}
 				{#if discoveryRelays.length > 3}
