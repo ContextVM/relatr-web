@@ -15,9 +15,9 @@
 		setServerPubkey
 	} from '$lib/stores/server-config.svelte';
 	import { User, Info, ChevronRight } from 'lucide-svelte';
-	import { isHexKey } from 'applesauce-core/helpers';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
+	import { isValidServerIdentifier } from '$lib/utils.nostr';
 	import * as Collapsible from '$lib/components/ui/collapsible/index.js';
 	import ChevronDown from '@lucide/svelte/icons/chevron-down';
 	import { getTaCapabilityState, useTaProviderStatus } from '$lib/queries/ta-provider';
@@ -35,8 +35,8 @@
 	function handleServerPubkeyChange() {
 		const trimmed = serverPubkeyInput.trim();
 
-		if (trimmed && !isHexKey(trimmed)) {
-			validationError = 'Invalid hex public key format';
+		if (trimmed && !isValidServerIdentifier(trimmed)) {
+			validationError = 'Invalid server identifier. Use hex, npub, or nprofile';
 			return;
 		}
 
@@ -69,7 +69,10 @@
 
 	function validateInput() {
 		const trimmed = serverPubkeyInput.trim();
-		validationError = trimmed && !isHexKey(trimmed) ? 'Invalid hex public key format' : null;
+		validationError =
+			trimmed && !isValidServerIdentifier(trimmed)
+				? 'Invalid server identifier. Use hex, npub, or nprofile'
+				: null;
 	}
 </script>
 

@@ -1,9 +1,9 @@
 import { browser } from '$app/environment';
-import { isHexKey } from 'applesauce-core/helpers';
 import { DEFAULT_SERVER } from '$lib/constants';
 import { activeAccount } from '$lib/services/accountManager.svelte.js';
 import { addServerToHistory, getServerHistory } from '$lib/utils';
 import { RelatrClient } from '$lib/ctxcn/RelatrClient';
+import { isValidServerIdentifier } from '$lib/utils.nostr';
 import type { IAccount } from 'applesauce-accounts';
 
 const serverConfig = $state({
@@ -17,10 +17,10 @@ function resolveInitialServerPubkey(): string {
 	if (!browser) return DEFAULT_SERVER;
 
 	const fromUrl = new URL(window.location.href).searchParams.get('s')?.trim();
-	if (fromUrl && isHexKey(fromUrl)) return fromUrl;
+	if (fromUrl && isValidServerIdentifier(fromUrl)) return fromUrl;
 
 	const [latest] = getServerHistory();
-	if (latest?.pubkey && isHexKey(latest.pubkey)) return latest.pubkey;
+	if (latest?.pubkey && isValidServerIdentifier(latest.pubkey)) return latest.pubkey;
 
 	return DEFAULT_SERVER;
 }
@@ -28,7 +28,7 @@ function resolveInitialServerPubkey(): string {
 function normalizeServerPubkey(input: string): string | null {
 	const trimmed = input.trim();
 	if (!trimmed) return DEFAULT_SERVER;
-	if (!isHexKey(trimmed)) return null;
+	if (!isValidServerIdentifier(trimmed)) return null;
 	return trimmed;
 }
 

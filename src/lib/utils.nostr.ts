@@ -6,6 +6,13 @@ import { relayPool } from './services/relay-pool';
 import { relayStore } from './stores/relay-store.svelte';
 import { eventStore } from './services/eventStore';
 
+export interface DecodedServerIdentifier {
+	original: string;
+	pubkey: string;
+	format: 'hex' | 'npub' | 'nprofile';
+	relayHints: string[];
+}
+
 /**
  * Sign an event with the active account
  * @param event The event to sign
@@ -44,31 +51,53 @@ export async function publishEvent(event: NostrEvent): Promise<string | undefine
  * @param identifier The identifier to validate and decode
  * @returns The hex pubkey if valid, null otherwise
  */
-export function validateAndDecodePubkey(identifier: string): string | null {
-	if (!identifier) return null;
+export function decodeServerIdentifier(identifier: string): DecodedServerIdentifier | null {
+	const trimmed = identifier.trim();
+	if (!trimmed) return null;
 
-	// Check if it's a hex pubkey
-	if (isHexKey(identifier)) {
-		return identifier;
+	if (isHexKey(trimmed)) {
+		return {
+			original: trimmed,
+			pubkey: trimmed,
+			format: 'hex',
+			relayHints: []
+		};
 	}
 
 	try {
-		// Try to decode as nip19
-		const { type, data } = decode(identifier);
+		const { type, data } = decode(trimmed);
 
 		if (type === 'npub') {
-			return data as string;
-		} else if (type === 'nprofile') {
-			const profile = data as { pubkey: string; relays?: string[] };
-			return profile.pubkey;
+			return {
+				original: trimmed,
+				pubkey: data as string,
+				format: 'npub',
+				relayHints: []
+			};
 		}
-	} catch (error) {
-		// Invalid nip19 format
-		console.error(error);
+
+		if (type === 'nprofile') {
+			const profile = data as { pubkey: string; relays?: string[] };
+			return {
+				original: trimmed,
+				pubkey: profile.pubkey,
+				format: 'nprofile',
+				relayHints: profile.relays ?? []
+			};
+		}
+	} catch {
 		return null;
 	}
 
 	return null;
+}
+
+export function validateAndDecodePubkey(identifier: string): string | null {
+	return decodeServerIdentifier(identifier)?.pubkey ?? null;
+}
+
+export function isValidServerIdentifier(identifier: string): boolean {
+	return decodeServerIdentifier(identifier) !== null;
 }
 
 /**

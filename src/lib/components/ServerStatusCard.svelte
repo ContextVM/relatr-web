@@ -7,10 +7,14 @@
 	import WeightDistribution from '$lib/components/plugins/WeightDistribution.svelte';
 	import ProfileCard from './ProfileCard.svelte';
 	import { Edit, Users, Link as LinkIcon, Clock, Trash2, Check, X, Copy } from 'lucide-svelte';
-	import { isHexKey } from 'applesauce-core/helpers';
 	import type { PluginsListOutput } from '$lib/ctxcn/RelatrClient';
 	import { usePluginsList } from '$lib/queries/plugins';
-	import { getPubkeyDisplay, pubkeyToHexColor } from '$lib/utils.nostr';
+	import {
+		decodeServerIdentifier,
+		getPubkeyDisplay,
+		isValidServerIdentifier,
+		pubkeyToHexColor
+	} from '$lib/utils.nostr';
 	import { copyToClipboard } from '$lib/utils';
 	import type { ServerHistoryItem } from '$lib/utils';
 	import { useServerStats } from '$lib/queries/server-stats';
@@ -213,11 +217,11 @@
 			<div class="space-y-3">
 				<!-- Server Input Section -->
 				<div class="space-y-2">
-					<Label for="server-pubkey">Server Public Key</Label>
+					<Label for="server-pubkey">Server Identifier</Label>
 					<Input
 						id="server-pubkey"
 						bind:value={serverPubkeyInput}
-						placeholder="Enter 64-character hex public key or leave empty for default"
+						placeholder="Enter hex, npub, or nprofile, or leave empty for default"
 						class="w-full font-mono text-sm"
 						oninput={onValidate}
 						onkeydown={(e: KeyboardEvent) => {
@@ -230,8 +234,8 @@
 					/>
 					{#if validationError}
 						<p class="text-xs text-destructive">{validationError}</p>
-					{:else if serverPubkeyInput.trim() && isHexKey(serverPubkeyInput.trim())}
-						<p class="text-xs text-green-600">✓ Valid hex public key</p>
+					{:else if serverPubkeyInput.trim() && isValidServerIdentifier(serverPubkeyInput.trim())}
+						<p class="text-xs text-green-600">✓ Valid server identifier</p>
 					{/if}
 				</div>
 
@@ -257,7 +261,9 @@
 												<div class="inline-flex items-center gap-1">
 													<div
 														class="h-2 w-2 rounded-full"
-														style="background-color: {pubkeyToHexColor(server.pubkey)}"
+														style="background-color: {pubkeyToHexColor(
+															decodeServerIdentifier(server.pubkey)?.pubkey ?? server.pubkey
+														)}"
 													></div>
 													<span class="font-mono text-xs">{getPubkeyDisplay(server.pubkey)}</span>
 												</div>

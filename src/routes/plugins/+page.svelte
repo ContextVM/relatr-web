@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import { isHexKey } from 'applesauce-core/helpers';
 	import { Spinner } from '$lib/components/ui/spinner/index.js';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
 	import {
@@ -43,7 +42,11 @@
 		useUninstallPlugins
 	} from '$lib/mutations/plugins';
 	import { activeAccount } from '$lib/services/accountManager.svelte';
-	import { NostrEventTypeGuard, validateAndDecodeEventId } from '$lib/utils.nostr';
+	import {
+		isValidServerIdentifier,
+		NostrEventTypeGuard,
+		validateAndDecodeEventId
+	} from '$lib/utils.nostr';
 
 	// Modular components
 	import PluginMarketplaceHeader from '$lib/components/plugins/PluginMarketplaceHeader.svelte';
@@ -135,8 +138,8 @@
 	function handleServerPubkeyChange() {
 		const trimmed = serverPubkeyInput.trim();
 
-		if (trimmed && !isHexKey(trimmed)) {
-			validationError = 'Invalid hex public key format';
+		if (trimmed && !isValidServerIdentifier(trimmed)) {
+			validationError = 'Invalid server identifier. Use hex, npub, or nprofile';
 			return;
 		}
 
@@ -153,7 +156,10 @@
 
 	function validateInput() {
 		const trimmed = serverPubkeyInput.trim();
-		validationError = trimmed && !isHexKey(trimmed) ? 'Invalid hex public key format' : null;
+		validationError =
+			trimmed && !isValidServerIdentifier(trimmed)
+				? 'Invalid server identifier. Use hex, npub, or nprofile'
+				: null;
 	}
 
 	function addDiscoveryRelay() {
