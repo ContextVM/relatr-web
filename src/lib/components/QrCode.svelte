@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import type { Bitmap2D, GenerateFn, ImageDataOptions } from 'lean-qr';
 
 	let {
 		data,
@@ -11,6 +12,16 @@
 
 	let canvas: HTMLCanvasElement;
 	let mounted = false;
+
+	type QrCanvasRenderable = Pick<Bitmap2D, 'toCanvas'>;
+
+	function isQrCanvasRenderable(value: unknown): value is QrCanvasRenderable {
+		if (typeof value !== 'object' || value === null) {
+			return false;
+		}
+
+		return 'toCanvas' in value && typeof value.toCanvas === 'function';
+	}
 
 	onMount(() => {
 		mounted = true;
@@ -28,19 +39,21 @@
 		try {
 			// Dynamic import avoids bundler/SSR quirks that can show up only in production deployments.
 			const mod = await import('lean-qr');
-			const generate = mod.generate as (input: string) => unknown;
-			const qr: any = generate(data);
+			const generate = mod.generate as GenerateFn;
+			const qr = generate(data);
 
-			if (!qr || typeof qr.toCanvas !== 'function') {
+			if (!isQrCanvasRenderable(qr)) {
 				throw new TypeError('lean-qr returned an invalid QR object');
 			}
 
-			qr.toCanvas(canvas, {
+			const options: Readonly<ImageDataOptions> = {
 				on: [0, 0, 0, 255], // black
 				off: [255, 255, 255, 255], // white background
 				padX: 4,
 				padY: 4
-			});
+			};
+
+			qr.toCanvas(canvas, options);
 
 			// Set the canvas display size using CSS
 			canvas.style.width = `${size}px`;
