@@ -1,0 +1,3 @@
+[submodule "contextvm-site"]
+	path = contextvm-site
+	url = git@github.com:ContextVM/contextvm-site.git

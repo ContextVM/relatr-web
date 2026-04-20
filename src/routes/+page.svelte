@@ -8,8 +8,8 @@
 	import ServerStatusCard from '$lib/components/ServerStatusCard.svelte';
 	import { Tabs, TabsContent, TabsList, TabsTrigger } from '$lib/components/ui/tabs/index.js';
 	import { type SearchProfilesOutput } from '$lib/ctxcn/RelatrClient';
-	import { isHexKey } from 'applesauce-core/helpers';
 	import { getServerHistory, removeServerFromHistory, type ServerHistoryItem } from '$lib/utils';
+	import { isValidServerIdentifier } from '$lib/utils.nostr';
 	import {
 		getRelatrClient,
 		getServerPubkey,
@@ -130,8 +130,8 @@
 	function handleServerPubkeyChange() {
 		const trimmed = serverPubkeyInput.trim();
 
-		if (trimmed && !isHexKey(trimmed)) {
-			validationError = 'Invalid hex public key format';
+		if (trimmed && !isValidServerIdentifier(trimmed)) {
+			validationError = 'Invalid server identifier. Use hex, npub, or nprofile';
 			return;
 		}
 
@@ -159,7 +159,10 @@
 
 	function validateInput() {
 		const trimmed = serverPubkeyInput.trim();
-		validationError = trimmed && !isHexKey(trimmed) ? 'Invalid hex public key format' : null;
+		validationError =
+			trimmed && !isValidServerIdentifier(trimmed)
+				? 'Invalid server identifier. Use hex, npub, or nprofile'
+				: null;
 	}
 </script>
 

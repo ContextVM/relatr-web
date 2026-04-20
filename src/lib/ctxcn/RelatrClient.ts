@@ -1,11 +1,6 @@
 import { Client } from '@modelcontextprotocol/sdk/client';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import {
-	NostrClientTransport,
-	type NostrTransportOptions,
-	PrivateKeySigner,
-	ApplesauceRelayPool
-} from '@contextvm/sdk';
+import { NostrClientTransport, type NostrTransportOptions, PrivateKeySigner } from '@contextvm/sdk';
 import { defaultRelays } from '$lib/services/relay-pool';
 
 export interface CalculateTrustScoreInput {
@@ -242,20 +237,22 @@ export class RelatrClient implements Relatr {
 		// Private key precedence: constructor options > config file
 		const resolvedPrivateKey = options.privateKey || '';
 
-		// Use options.signer if provided, otherwise create from resolved private key
 		const signer = options.signer || new PrivateKeySigner(resolvedPrivateKey);
-		// Use options.relays if provided, otherwise use class DEFAULT_RELAYS
-		const relays = options.relays || RelatrClient.DEFAULT_RELAYS;
-		// Use options.relayHandler if provided, otherwise create from relays
-		const relayHandler = options.relayHandler || new ApplesauceRelayPool(relays);
 		const serverPubkey = options.serverPubkey;
+		const { relays, relayHandler: providedRelayHandler, fallbackOperationalRelayUrls } = options;
+		const resolvedFallbackOperationalRelayUrls =
+			fallbackOperationalRelayUrls || relays || RelatrClient.DEFAULT_RELAYS;
 		const rest = { ...options };
 		delete rest.privateKey;
+		delete rest.relays;
+		delete rest.relayHandler;
+		delete rest.fallbackOperationalRelayUrls;
 
 		this.transport = new NostrClientTransport({
 			serverPubkey: serverPubkey || RelatrClient.SERVER_PUBKEY,
 			signer,
-			relayHandler,
+			...(providedRelayHandler ? { relayHandler: providedRelayHandler } : {}),
+			fallbackOperationalRelayUrls: resolvedFallbackOperationalRelayUrls,
 			isStateless: true,
 			...rest
 		});

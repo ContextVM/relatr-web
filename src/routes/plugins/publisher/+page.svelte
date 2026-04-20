@@ -379,7 +379,7 @@
 							</p>
 						{:else}
 							<ul class="space-y-2">
-								{#each diagnostics as diagnostic}
+								{#each diagnostics as diagnostic (`${diagnostic.severity}:${diagnostic.message}:${diagnostic.location?.line ?? 0}:${diagnostic.location?.column ?? 0}`)}
 									<li class="rounded-lg border p-3">
 										<div class="flex items-center justify-between gap-3">
 											<span class="font-medium uppercase">{diagnostic.severity}</span>
@@ -427,7 +427,7 @@
 							</div>
 							<Collapsible.Content class="space-y-4">
 								<div class="space-y-2">
-									{#each availableWriteRelays as relay}
+									{#each availableWriteRelays as relay (relay)}
 										<label class="flex items-start gap-3 rounded-lg border p-3 text-sm">
 											<input
 												type="checkbox"
