@@ -35,12 +35,6 @@
 	);
 	const initialExtendToNostr = $derived(urlParams.get('nostr') === '1');
 
-	function clearSearchParams(searchParams: URLSearchParams) {
-		searchParams.delete('q');
-		searchParams.delete('limit');
-		searchParams.delete('nostr');
-	}
-
 	// Keep the input seeded from the shared store (store also handles initial `?s=` and history)
 	$effect(() => {
 		if (!serverPubkeyInput) serverPubkeyInput = serverPubkey;

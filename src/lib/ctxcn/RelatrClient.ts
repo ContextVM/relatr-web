@@ -239,15 +239,14 @@ export class RelatrClient implements Relatr {
 
 		const signer = options.signer || new PrivateKeySigner(resolvedPrivateKey);
 		const serverPubkey = options.serverPubkey;
-		const {
-			privateKey: _,
-			relays,
-			relayHandler: providedRelayHandler,
-			fallbackOperationalRelayUrls,
-			...rest
-		} = options;
+		const { relays, relayHandler: providedRelayHandler, fallbackOperationalRelayUrls } = options;
 		const resolvedFallbackOperationalRelayUrls =
 			fallbackOperationalRelayUrls || relays || RelatrClient.DEFAULT_RELAYS;
+		const rest = { ...options };
+		delete rest.privateKey;
+		delete rest.relays;
+		delete rest.relayHandler;
+		delete rest.fallbackOperationalRelayUrls;
 
 		this.transport = new NostrClientTransport({
 			serverPubkey: serverPubkey || RelatrClient.SERVER_PUBKEY,
