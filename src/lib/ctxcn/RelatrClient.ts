@@ -1,7 +1,7 @@
-import { Client } from '@modelcontextprotocol/sdk/client';
-import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
+import { Client } from '@contextvm/mcp-sdk/client';
 import { NostrClientTransport, type NostrTransportOptions, PrivateKeySigner } from '@contextvm/sdk';
 import { defaultRelays } from '$lib/services/relay-pool';
+import type { Transport } from '@contextvm/mcp-sdk/shared/transport';
 
 export interface CalculateTrustScoreInput {
 	targetPubkey: string;
