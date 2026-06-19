@@ -1,6 +1,7 @@
 import type { EventTemplate, NostrEvent } from 'nostr-tools';
 import { decode, npubEncode, nprofileEncode, noteEncode, neventEncode } from 'nostr-tools/nip19';
 import { isHexKey } from 'applesauce-core/helpers';
+import { toast } from 'svelte-sonner';
 import { activeAccount } from './services/accountManager.svelte';
 import { relayPool } from './services/relay-pool';
 import { relayStore } from './stores/relay-store.svelte';
@@ -18,11 +19,12 @@ export interface DecodedServerIdentifier {
  * @param event The event to sign
  * @returns The signed event
  */
-export async function signEvent(event: EventTemplate): Promise<NostrEvent | undefined> {
+export async function signEvent(event: EventTemplate): Promise<NostrEvent> {
 	if (!activeAccount.value) {
-		console.error('Please log in to sign this event.');
+		toast.error('Please log in to sign this event.');
+		throw new Error('Cannot sign event: no active account');
 	}
-	const signedEvent = await activeAccount.value?.signer.signEvent(event);
+	const signedEvent = await activeAccount.value.signer.signEvent(event);
 	return signedEvent;
 }
 

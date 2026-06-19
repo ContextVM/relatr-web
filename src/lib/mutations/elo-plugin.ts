@@ -52,9 +52,6 @@ export function usePublishEloPlugin(discoveryRelays: string[]) {
 			};
 
 			const signedEvent = await signEvent(eventTemplate);
-			if (!signedEvent) {
-				throw new Error('Failed to sign plugin event');
-			}
 
 			const publishRelays = relaySet(input.publishRelays);
 			const responses = await relayPool.publish(publishRelays, signedEvent);

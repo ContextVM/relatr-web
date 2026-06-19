@@ -73,9 +73,6 @@ export function usePublishTaProvider() {
 
 			// Sign the event
 			const signedEvent = await signEvent(eventTemplate);
-			if (!signedEvent) {
-				throw new Error('Failed to sign event');
-			}
 
 			// Publish to user's write relays (plus any currently selected relays, de-duped)
 			const publishRelays = relaySet([...userRelays, ...relayStore.selectedRelays]);
