@@ -266,11 +266,13 @@ export function getEventDisplay(identifier: string): string {
 
 /**
  * Generate a hex color from a hexadecimal string pubkey
- * Takes the first 6 characters and prepends '#' to create a valid hex color
+ * Takes the first 6 characters and prepends '#' to create a valid hex color.
+ * Returns a neutral fallback color when pubkey is empty so the function is
+ * safe to call directly inside template expressions before data has loaded.
  */
 export function pubkeyToHexColor(pubkey: string): string {
 	if (!pubkey) {
-		throw new Error('Pubkey is required');
+		return '#888888';
 	}
 
 	const hexColor = pubkey.slice(0, 6);
