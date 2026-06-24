@@ -28,6 +28,7 @@
 	} = $props();
 
 	let draftTargetPubkey = $state(targetPubkey);
+	let validationError = $state<string | null>(null);
 
 	// Use query for trust score with automatic caching
 	const trustScoreQuery = $derived(useTrustScore(relatr, serverPubkey, targetPubkey));
@@ -46,14 +47,21 @@
 		draftTargetPubkey = targetPubkey;
 	});
 
+	$effect(() => {
+		// Clear validation error whenever the user edits the input
+		draftTargetPubkey;
+		validationError = null;
+	});
+
 	function calculateTrustScore() {
 		const trimmed = draftTargetPubkey.trim();
 
 		if (!validateAndDecodePubkey(trimmed)) {
-			// We need to handle this validation error separately since the query doesn't validate
+			validationError = 'Invalid pubkey. Please enter a valid npub1… or hex pubkey.';
 			return;
 		}
 
+		validationError = null;
 		onCalculate({
 			targetPresent: true,
 			targetPubkey: trimmed
@@ -118,7 +126,9 @@
 			{/if}
 		</Button>
 
-		{#if error}
+		{#if validationError}
+			<p class="text-sm text-destructive">{validationError}</p>
+		{:else if error}
 			<p class="text-sm text-destructive">{error}</p>
 		{/if}
 	{:else}
