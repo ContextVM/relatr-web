@@ -225,6 +225,7 @@ export class RelatrClient implements Relatr {
 	static readonly DEFAULT_RELAYS = defaultRelays;
 	private client: Client;
 	private transport: Transport;
+	private readyPromise: Promise<void>;
 
 	constructor(
 		options: Partial<NostrTransportOptions> & { privateKey?: string; relays?: string[] } = {}
@@ -257,8 +258,11 @@ export class RelatrClient implements Relatr {
 			...rest
 		});
 
-		// Auto-connect in constructor
-		this.client.connect(this.transport).catch((error) => {
+		// Auto-connect in constructor. `call()` awaits this promise so tool calls never
+		// fire before the transport has resolved relays and connected — otherwise
+		// publishes are attempted on an unconnected relay pool and retry for ~30s.
+		this.readyPromise = this.client.connect(this.transport);
+		this.readyPromise.catch((error) => {
 			console.error(`Failed to connect to server: ${error}`);
 		});
 	}
@@ -268,6 +272,7 @@ export class RelatrClient implements Relatr {
 	}
 
 	private async call<T = unknown>(name: string, args: Record<string, unknown>): Promise<T> {
+		await this.readyPromise;
 		const result = await this.client.callTool({
 			name,
 			arguments: { ...args }

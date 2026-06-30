@@ -3,7 +3,7 @@ import { DEFAULT_SERVER } from '$lib/constants';
 import { activeAccount } from '$lib/services/accountManager.svelte.js';
 import { addServerToHistory, getServerHistory } from '$lib/utils';
 import { RelatrClient } from '$lib/ctxcn/RelatrClient';
-import { isValidServerIdentifier } from '$lib/utils.nostr';
+import { decodeServerIdentifier, isValidServerIdentifier } from '$lib/utils.nostr';
 import type { IAccount } from 'applesauce-accounts';
 
 const serverConfig = $state({
@@ -64,8 +64,11 @@ export function getRelatrClient() {
 	return serverConfig.client;
 }
 
+// Returns the server's hex pubkey. The stored value is a transport identifier
+// (nprofile/npub/hex) passed to NostrClientTransport; consumers need the raw hex
+// for Nostr tags, filters, and comparisons.
 export function getServerPubkey() {
-	return serverConfig.pubkey;
+	return decodeServerIdentifier(serverConfig.pubkey)?.pubkey ?? serverConfig.pubkey;
 }
 
 export function setServerPubkey(nextServerPubkey: string) {

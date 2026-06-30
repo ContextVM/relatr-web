@@ -1,3 +1,4 @@
-export const DEFAULT_SERVER = '750682303c9f0ddad75941b49edc9d46e3ed306b9ee3335338a21a3e404c5fa3';
+export const DEFAULT_SERVER =
+	'nprofile1qyd8wumn8ghj7un9d3shjtnrdah8getcw3mx6tn0wfnj7qgmwaehxw309aex2mrp0yezucm0de6x27r5wekjummjvuhsz9mhwden5te0wfjkccte9ec8y6tdv9kzumn9wshsqgr4q6prq0ylphddwk2pkj0de82xu0knq6u7uve4xw9zrglyqnzl5vlrpkxh';
 export const TA_PROVIDERS_KIND = 10040;
 export const ELO_PLUGIN_KIND = 765;
